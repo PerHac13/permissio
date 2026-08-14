@@ -20,4 +20,4 @@ server:
 permissio:
   jwt:
     expiration-ms: 900000
-  api-key:
+
