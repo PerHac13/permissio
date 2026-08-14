@@ -15,3 +15,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+permissio:
+  jwt:
+    secret: local-dev-secret-key-not-for-production-use-only-32chars
+  api-key:
+    salt: local-dev-salt-not-for-production-use

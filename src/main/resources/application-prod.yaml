@@ -12,3 +12,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+permissio:
+  jwt:
+    secret: ${PERMISSIO_JWT_SECRET}
+  api-key:
+    salt: ${PERMISSIO_API_KEY_SALT}

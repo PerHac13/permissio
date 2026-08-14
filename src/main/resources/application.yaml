@@ -19,7 +19,5 @@ server:
 
 permissio:
   jwt:
-    secret: ${PERMISSIO_JWT_SECRET:permissio-dev-secret-key-change-in-production-min-32-chars!!}
     expiration-ms: 900000
   api-key:
-    salt: ${PERMISSIO_API_KEY_SALT:permissio-dev-salt-change-in-production}

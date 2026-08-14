@@ -11,3 +11,9 @@ spring:
     show-sql: false
   flyway:
     clean-disabled: false
+
+permissio:
+  jwt:
+    secret: test-profile-secret-key-not-for-production-use-32chars
+  api-key:
+    salt: test-profile-salt-not-for-production-use
