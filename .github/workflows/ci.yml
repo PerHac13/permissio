@@ -1,0 +1,45 @@
+name: Permissio CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and run tests with coverage
+        run: ./mvnw verify -Dspring.profiles.active=test --batch-mode --no-transfer-progress
+        env:
+          PERMISSIO_JWT_SECRET: ${{ secrets.PERMISSIO_JWT_SECRET || 'ci-jwt-secret-key-fallback-32-chars-xyz987-PerHac13' }}
+          PERMISSIO_API_KEY_SALT: ${{ secrets.PERMISSIO_API_KEY_SALT || 'ci-api-key-salt-fallback-abc123-PerHac13' }}
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: target/site/jacoco/
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/surefire-reports/
+          retention-days: 14
