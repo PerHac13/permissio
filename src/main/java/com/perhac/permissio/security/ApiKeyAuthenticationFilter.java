@@ -58,8 +58,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/v1/auth/")
-                || path.startsWith("/actuator/")
+        // Auth endpoints (register/login) DO require X-API-Key for tenant context
+        return path.startsWith("/actuator/")
                 || path.startsWith("/h2-console");
     }
 
