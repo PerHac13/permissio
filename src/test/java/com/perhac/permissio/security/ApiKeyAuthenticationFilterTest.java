@@ -141,10 +141,11 @@ class ApiKeyAuthenticationFilterTest {
     }
 
     @Test
-    void authEndpoints_areSkipped() throws ServletException, IOException {
+    void authEndpoints_areNotSkipped() throws ServletException, IOException {
+        // Auth endpoints require X-API-Key for tenant context
         request.setRequestURI("/api/v1/auth/register");
 
-        assertThat(filter.shouldNotFilter(request)).isTrue();
+        assertThat(filter.shouldNotFilter(request)).isFalse();
     }
 
     @Test
