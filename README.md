@@ -1,244 +1,113 @@
-# Permissio
+# 🛡 Permissio
 
 > **A standalone, domain-agnostic authorization service** combining **RBAC**, **ABAC**, and **ReBAC** into a unified, high-performance evaluation pipeline with a future migration path to a **Zanzibar-style relationship graph**.
 
----
-
-## 📋 Table of Contents
-
-1. [Problem Statement — Why Permissio?](#-problem-statement--why-permissio)
-2. [Core Concepts & Primitives](#-core-concepts--primitives)
-3. [Architecture & Authorization Pipeline](#-architecture--authorization-pipeline)
-4. [Tech Stack](#-tech-stack)
-5. [Terminal Commands Cheat Sheet](#-terminal-commands-cheat-sheet)
-6. [Database & Environment Strategy (Plug-and-Play)](#-database--environment-strategy-plug-and-play)
-7. [Project Structure & Implemented Modules](#-project-structure--implemented-modules)
-8. [Roadmap & Backlog Progress](#-roadmap--backlog-progress)
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Coverage](https://img.shields.io/badge/JaCoCo-≥80%25-blue.svg)](target/site/jacoco/index.html)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
 
-## 🎯 Problem Statement — Why Permissio?
+## 🧭 Documentation Directory
 
-In most applications, authorization starts with flat role checks (`USER`, `ADMIN`, `SUPER_ADMIN`) scattered throughout controllers, services, and queries. Over time, this architecture breaks down:
+To keep documentation clean and maintainable as the codebase expands, detailed technical documentation has been modularized:
 
-- **Logic Scattered Everywhere:** Role checks are copy-pasted across services, leading to inconsistent enforcement and security gaps.
-- **Hierarchical & Scoped Permissions Fail:** Answering *"Can a Project Manager edit documents in only Project #10?"* or *"Can a Team Lead approve announcements during working hours?"* cannot be cleanly answered by static roles.
-- **Cross-Service Coupling:** Every backend service re-invents its own auth logic, leading to duplicate code and divergent security policies.
-- **Zero Audit Trail:** No centralized, immutable log of *who was granted or denied access, why, and which policy triggered the outcome*.
-
-### The Permissio Solution:
-Permissio centralizes all authorization behind a single **`/api/v1/authorize`** endpoint. It abstracts away application-specific entities (students, employees, documents, tickets) into **five generic primitives** and evaluates relationships, attributes, and business rules in a fast, short-circuiting pipeline.
-
-**The Independence Principle:** Permissio is a tenant-isolated, self-contained service. Consuming applications are *tenants*, never dependencies. No domain-specific code or database tables ever leak into Permissio.
+| Document | Description |
+|---|---|
+| **[🏗 Architecture & Authorization Pipeline](docs/ARCHITECTURE.md)** | Core primitives (`Subject`, `Resource`, `Relation`, `Action`, `Policy`), ReBAC hierarchy, and 4-stage decision pipeline. |
+| **[🛠 Development & Local Setup Guide](docs/DEVELOPMENT.md)** | Terminal commands cheat sheet, H2 vs PostgreSQL profile configuration, `.env` setup, and JaCoCo coverage guide. |
+| **[📂 Project Structure & Module Directory](docs/MODULES.md)** | Codebase package structure, class responsibilities, filter chain flow, and conventions for new modules. |
+| **[📦 Dependencies & Build Reference Guide](.reference/Permissio-Dependencies-Guide.md)** | Detailed breakdown of every starter, library, and plugin declared in `pom.xml`. |
+| **[📋 Agile & TDD Backlog](.reference/Permissio-Backlog.md)** | Comprehensive roadmap, sprint grouping, and progress across all epics (0 through 12). |
 
 ---
 
-## 🧩 Core Concepts & Primitives
+## 🎯 The Core Problem & Solution
 
-| Primitive | Description | Example Mapping |
-|---|---|---|
-| **Subject** | The actor requesting access | User ID, Service Account, Employee UUID |
-| **Resource** | The target entity being acted upon | `DOCUMENT:456`, `PROJECT:10`, `EVENT:789` |
-| **Relation** | Hierarchical link between Subject & Resource | `OWNER`, `MANAGER`, `LEAD`, `MEMBER` |
-| **Action** | Operation attempted | `CREATE`, `READ`, `UPDATE`, `DELETE`, `APPROVE` |
-| **Policy** | Attribute-based or business rule condition | Department match, working hours, IP constraints |
+In most architectures, authorization is fragmented: hardcoded role checks (`hasRole('ADMIN')`) are scattered throughout controllers, services, and SQL queries. This makes hierarchical relationships (*"Can a Project Lead edit documents in Project #10?"*) or contextual conditions (*"Can a Manager approve expenses during working hours?"*) difficult to maintain and verify.
 
-### Permission Hierarchy (ReBAC)
+### How Permissio Solves This:
+1. **Centralized Decision Engine:** Exposes a single high-performance **`POST /api/v1/authorize`** endpoint.
+2. **Domain-Agnostic Primitives:** Translates any business entity (users, documents, medical records, financial assets) into **5 universal primitives**.
+3. **Multi-Model Support:** Unifies Role-Based (RBAC), Attribute-Based (ABAC), and Relationship-Based (ReBAC) authorization into a single short-circuiting pipeline.
+4. **Hard Multi-Tenant Isolation:** Consuming services are tenants, never code dependencies. Every piece of data is strictly isolated by `client_id`.
+5. **Immutable Audit Trail:** Append-only audit logging of every decision, reason code, and policy evaluator.
+
+---
+
+## ⚡ Quickstart in 60 Seconds
+
+### 1. Clone & Run (In-Memory Dev Mode)
+Permissio boots out of the box with zero external dependencies using an embedded H2 database:
+
+```bash
+# Clone the repository
+git clone https://github.com/PerHac13/permissio.git
+cd permissio
+
+# Run local dev server (Windows)
+.\mvnw.cmd spring-boot:run
+
+# Run local dev server (Linux / macOS)
+./mvnw spring-boot:run
 ```
-OWNER   (Rank 4)  →  CREATE, READ, UPDATE, DELETE, APPROVE, REJECT
-MANAGER (Rank 3)  →  CREATE, READ, UPDATE
-LEAD    (Rank 2)  →  CREATE, READ
-MEMBER  (Rank 1)  →  READ
-```
 
----
+- **Base URL:** `http://localhost:8080`
+- **H2 Web Console:** `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:permissio`, User: `sa`, Password: *blank*)
+- **Health Check:** `http://localhost:8080/actuator/health`
 
-## 🏗 Architecture & Authorization Pipeline
-
-```
-Inbound Request
-      │
-      ▼
-┌────────────────────────────────────────────────────────┐
-│ 1. API Key Authentication (Resolves Tenant/Client)     │
-└───────────────────────┬────────────────────────────────┘
-                        │
-                        ▼
-┌────────────────────────────────────────────────────────┐
-│ 2. JWT Validation (Resolves Subject Identity)          │
-└───────────────────────┬────────────────────────────────┘
-                        │
-                        ▼
-┌────────────────────────────────────────────────────────┐
-│ 3. Build Authorization Context (Subject/Resource/Rels) │
-└───────────────────────┬────────────────────────────────┘
-                        │
-        ┌───────────────┴───────────────┐
-        ▼                               ▼
-┌───────────────┐               ┌───────────────┐
-│ ReBAC Check   │ ──(Denied)──► │  DENY (Short) │
-└───────┬───────┘               └───────────────┘
-        ▼ (Passed)
-┌───────────────┐               ┌───────────────┐
-│  ABAC Check   │ ──(Denied)──► │  DENY (Short) │
-└───────┬───────┘               └───────────────┘
-        ▼ (Passed)
-┌───────────────┐               ┌───────────────┐
-│ Business Rule │ ──(Denied)──► │  DENY (Short) │
-└───────┬───────┘               └───────────────┘
-        ▼ (Passed)
-┌───────────────┐
-│ ALLOW (Pass)  │
-└───────┬───────┘
-        ▼
-┌────────────────────────────────────────────────────────┐
-│ 4. Append-Only Audit Log (Decision, Evaluator, Reason) │
-└────────────────────────────────────────────────────────┘
+### 2. Run the Test Suite & Coverage Gate
+```bash
+# Run all unit & integration tests + JaCoCo coverage check (>= 80% required)
+./mvnw clean verify -Dspring.profiles.active=test
 ```
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Language:** Java 21 (LTS) — Records, pattern matching, virtual threads
+- **Language:** Java 21 (LTS) — Records, Pattern Matching, Sealed Types
 - **Framework:** Spring Boot 4.1.0 (latest)
 - **Persistence:** Spring Data JPA + Hibernate 7
-- **Database:**
-  - **Dev:** H2 in-memory (PostgreSQL compatibility mode) — *instant startup, zero external dependencies*
-  - **Test:** H2 in-memory isolated schema
-  - **Prod:** PostgreSQL 16 (via Docker Compose or standalone instance)
+- **Databases:**
+  - **Dev / Test:** H2 In-Memory (PostgreSQL compatibility mode)
+  - **Production:** PostgreSQL 16 (via Docker Compose or Cloud RDS)
 - **Migrations:** Flyway
-- **Security:** Spring Security + JJWT 0.13.0 + BCrypt + Salted SHA-256 (API keys)
-- **Testing:** JUnit 5, Mockito, AssertJ, JaCoCo (strictly enforcing ≥ 80% line coverage)
-- **CI/CD:** GitHub Actions (JDK 21, Maven verify, automated coverage reports)
+- **Security:** Spring Security + JJWT (HMAC-SHA256) + Salted SHA-256 (API Keys) + BCrypt
+- **JSON Engine:** Jackson 3 (`tools.jackson.core:jackson-databind`)
+- **Testing:** JUnit 5, Mockito, AssertJ, Spring Test, JaCoCo (≥ 80% line coverage enforcement)
 
 ---
 
-## 🚀 Terminal Commands Cheat Sheet
+## 📊 Roadmap & Milestone Progress
 
-### 🟢 1. Run the Application (Dev Mode — H2 In-Memory)
-
-```powershell
-# Windows PowerShell / CMD
-.\mvnw.cmd spring-boot:run
-
-# Linux / macOS
-./mvnw spring-boot:run
-```
-- **Base URL:** `http://localhost:8080`
-- **H2 Web Console:** `http://localhost:8080/h2-console`
-  - **JDBC URL:** `jdbc:h2:mem:permissio`
-  - **Username:** `sa`
-  - **Password:** *(leave blank)*
-- **Health Probe:** `http://localhost:8080/actuator/health`
-
----
-
-### 🧪 2. Run TDD Test Suite & Code Coverage
-
-```powershell
-# Run all 37 Unit & Integration tests (fast in-memory H2)
-.\mvnw.cmd test
-
-# Run tests + JaCoCo coverage validation (enforces >= 80% line coverage)
-.\mvnw.cmd verify
-```
-> 📊 **JaCoCo Coverage Report:** Open `target/site/jacoco/index.html` in your browser.
-
----
-
-### 🐳 3. Run with PostgreSQL (Production Mode)
-
-```powershell
-# 1. Start PostgreSQL 16 container via Docker Compose
-docker compose up -d
-
-# 2. Run application with prod profile
-.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod
-```
-
----
-
-### 📦 4. Build Executable Production JAR
-
-```powershell
-# Build fat JAR (skipping test phase for speed)
-.\mvnw.cmd clean package -DskipTests
-
-# Run the generated artifact
-java -jar target/permissio-0.0.1-SNAPSHOT.jar
-```
-
----
-
-## 🗄 Database & Environment Strategy (Plug-and-Play)
-
-Permissio utilizes Spring profiles so switching between development (H2) and production (PostgreSQL) requires **zero code changes**:
-
-| Profile | Target Database | Use Case | Key Configuration |
-|---|---|---|---|
-| **`dev`** | **H2 (In-Memory)** | Local dev without Docker | `jdbc:h2:mem:permissio;MODE=PostgreSQL`, H2 Console enabled |
-| **`test`** | **H2 (In-Memory)** | Automated testing | `jdbc:h2:mem:permissio_test;MODE=PostgreSQL`, Clean DB per test run |
-| **`prod`** | **PostgreSQL 16** | Production / Staging | `jdbc:postgresql://localhost:5432/permissio`, reads credentials from `.env` |
-
-### Environment Variables ([.env](.env))
-
-Placeholder Template: [.env.example](.env.example)
-
----
-
-## 📂 Project Structure & Implemented Modules
-
-```
-src/main/java/com/perhac/permissio/
-├── PermissioApplication.java           # Main Spring Boot Runner
-│
-├── client                              # Epic 1: Tenant / Client Module
-│   ├── entity/Client.java              # Client JPA Entity (Tenant root)
-│   ├── repository/ClientRepository.java# Repository with findByApiKeyHash
-│   └── service/ClientService.java      # Client resolution & registration
-│
-├── common                              # Shared Utilities & Exceptions
-│   └── exception/
-│       ├── GlobalExceptionHandler.java # Uniform ErrorResponse mapping
-│       ├── ErrorResponse.java          # Record: { code, message, traceId }
-│       ├── NotFoundException.java      # 404 Exception
-│       └── UnauthorizedException.java  # 401 Exception
-│
-├── config                              # Spring Configuration Beans
-│   ├── SecurityConfig.java             # Stateless filter chain configuration
-│   └── ApiKeyHasherConfig.java         # Salted ApiKeyHasher bean
-│
-└── security                            # Security & Multi-Tenancy Context
-    ├── TenantContext.java              # ThreadLocal<UUID> tenant holder
-    ├── ApiKeyHasher.java               # SHA-256 with salt key hasher
-    └── ApiKeyAuthenticationFilter.java # OncePerRequestFilter for X-API-Key
-```
-
----
-
-## 📊 Roadmap & Backlog Progress
-
-- [x] **Epic 0 — Project Bootstrap & Foundation**
+- [x] **Epic 0 — Project Bootstrap & Infrastructure**
   - [x] Spring Boot 4.1.0 + Java 21 setup
-  - [x] Plug-and-play H2 (Dev/Test) & PostgreSQL (Prod) profile wiring
+  - [x] Multi-profile configuration (H2 dev/test, PostgreSQL prod)
   - [x] Flyway migrations baseline (`V1__init_clients_table.sql`)
-  - [x] GitHub Actions CI pipeline with JaCoCo coverage gate (≥ 80%)
-  - [x] Docker Compose configuration for PostgreSQL 16
-- [x] **Epic 1 — Tenant & Client Module (`client` package)**
+  - [x] CI pipeline with JaCoCo coverage enforcement
+- [x] **Epic 1 — Multi-Tenant & Client Module (`client`)**
   - [x] `Client` entity and `ClientRepository`
   - [x] `TenantContext` ThreadLocal tenant scope management
   - [x] Salted `ApiKeyHasher` (keys never stored in plaintext)
-  - [x] `ApiKeyAuthenticationFilter` with automatic tenant scoping and leak-proof cleanup
-  - [x] Standard `GlobalExceptionHandler` with machine-readable error envelopes
-  - [x] **100% test pass rate (37/37 tests green)**
-- [ ] **Epic 2 — Authentication & JWT Module (`authentication`, `security`)** *(Working)*
-  - [ ] Subject registration & login endpoints (`/api/v1/auth/register`, `/api/v1/auth/login`)
-  - [ ] `JwtTokenProvider` & `JwtAuthenticationFilter`
-- [ ] **Epic 3 — Subject Module** (Tenant-scoped CRUD)
-- [ ] **Epic 4 — Resource Module** (Tenant-scoped CRUD)
-- [ ] **Epic 5 — Relationship Module** (ReBAC Hierarchy)
+  - [x] `ApiKeyAuthenticationFilter` with automatic tenant scoping
+- [x] **Epic 2 — Authentication & JWT Module (`authentication`, `security`)**
+  - [x] `Subject` JPA entity and Flyway migration (`V2__init_subjects_table.sql`)
+  - [x] BCrypt password hashing & HMAC-SHA256 `JwtTokenProvider`
+  - [x] `JwtAuthenticationFilter` with Bearer token validation
+  - [x] Registration & login endpoints (`/api/v1/auth/register`, `/api/v1/auth/login`)
+  - [x] **100/100 tests green (100% pass rate)**
+- [ ] **Epic 3 — Subject Module** *(Next Up: Tenant-scoped CRUD & Attributes)*
+- [ ] **Epic 4 — Resource Module** *(Tenant-scoped CRUD)*
+- [ ] **Epic 5 — Relationship Module** *(ReBAC Hierarchy & Rank Ordering)*
 - [ ] **Epic 6 — Authorization Engine Core** (`POST /api/v1/authorize`)
 - [ ] **Epic 7 — ABAC & Business Rule Evaluators**
 - [ ] **Epic 8 — Audit Logging Module**
-- [ ] **Epic 9 — Observability (OpenTelemetry Traces & Metrics)**
+- [ ] **Epic 9 — Observability & OpenTelemetry**
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache 2.0 License.
