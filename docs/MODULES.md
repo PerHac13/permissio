@@ -30,9 +30,15 @@ src/main/java/com/perhac/permissio/
 │   ├── JwtAuthenticationFilter.java    # OncePerRequestFilter for Bearer JWT token
 │   └── SubjectPrincipal.java           # Authenticated principal object
 │
-├── subject                             # 👤 Subject Primitive (Epic 3)
+├── subject                             # 👤 Subject Primitive (Epic 2 + Epic 3)
 │   ├── entity/Subject.java             # Subject JPA Entity with JSON attributes
-│   └── repository/SubjectRepository.java # Tenant-scoped Subject queries
+│   ├── repository/SubjectRepository.java # Tenant-scoped Subject queries
+│   ├── service/SubjectService.java     # Tenant-scoped CRUD & attribute management
+│   ├── controller/SubjectController.java # REST: /api/v1/subjects/**
+│   └── dto/
+│       ├── SubjectResponse.java        # Record: { id, clientId, externalId, attributes, createdAt }
+│       ├── CreateSubjectRequest.java   # DTO: { externalId, password?, attributes? }
+│       └── UpdateSubjectAttributesRequest.java # DTO: { attributes }
 │
 ├── common                              # 🌐 Shared Utilities & Error Envelopes
 │   └── exception/
@@ -67,6 +73,14 @@ src/main/java/com/perhac/permissio/
 ### 3. `subject` (The Actor Primitive)
 - **Purpose:** Manages actors (users, service accounts, agents) requesting permissions.
 - **Attributes:** Contains dynamic JSON attributes (department, clearance, team) stored in the database for ABAC policy evaluation.
+- **REST Endpoints (Epic 3):**
+  - `POST /api/v1/subjects` — Create a subject (201 Created)
+  - `GET /api/v1/subjects/{id}` — Get by internal UUID (200 OK)
+  - `GET /api/v1/subjects/external/{externalId}` — Get by external ID (200 OK)
+  - `GET /api/v1/subjects` — List all tenant subjects (200 OK)
+  - `PUT /api/v1/subjects/{id}/attributes` — Replace ABAC attributes (200 OK)
+  - `DELETE /api/v1/subjects/{id}` — Delete subject (204 No Content)
+- **Tenant Isolation:** All queries scoped by `clientId` via `TenantContext`; cross-tenant lookups return 404 (never leaks existence).
 
 ### 4. `common`
 - **Purpose:** Cross-cutting concerns such as standardized exception handling.

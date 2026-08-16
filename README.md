@@ -97,9 +97,13 @@ cd permissio
   - [x] BCrypt password hashing & HMAC-SHA256 `JwtTokenProvider`
   - [x] `JwtAuthenticationFilter` with Bearer token validation
   - [x] Registration & login endpoints (`/api/v1/auth/register`, `/api/v1/auth/login`)
-  - [x] **100/100 tests green (100% pass rate)**
-- [ ] **Epic 3 — Subject Module** *(Next Up: Tenant-scoped CRUD & Attributes)*
-- [ ] **Epic 4 — Resource Module** *(Tenant-scoped CRUD)*
+- [x] **Epic 3 — Subject Module (Tenant-Scoped CRUD & Attributes)**
+  - [x] `SubjectService` — tenant-scoped create, get, list, update attributes, delete
+  - [x] `SubjectController` — 6 REST endpoints under `/api/v1/subjects`
+  - [x] DTOs: `SubjectResponse`, `CreateSubjectRequest`, `UpdateSubjectAttributesRequest`
+  - [x] Cross-tenant isolation: subjects invisible across tenants (returns 404, never leaks existence)
+  - [x] **125/125 tests green (100% pass rate)**
+- [ ] **Epic 4 — Resource Module** *(Next Up: Tenant-scoped CRUD)*
 - [ ] **Epic 5 — Relationship Module** *(ReBAC Hierarchy & Rank Ordering)*
 - [ ] **Epic 6 — Authorization Engine Core** (`POST /api/v1/authorize`)
 - [ ] **Epic 7 — ABAC & Business Rule Evaluators**
