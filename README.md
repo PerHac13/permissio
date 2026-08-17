@@ -103,9 +103,25 @@ cd permissio
   - [x] DTOs: `SubjectResponse`, `CreateSubjectRequest`, `UpdateSubjectAttributesRequest`
   - [x] Cross-tenant isolation: subjects invisible across tenants (returns 404, never leaks existence)
   - [x] **125/125 tests green (100% pass rate)**
-- [ ] **Epic 4 — Resource Module** *(Next Up: Tenant-scoped CRUD)*
-- [ ] **Epic 5 — Relationship Module** *(ReBAC Hierarchy & Rank Ordering)*
-- [ ] **Epic 6 — Authorization Engine Core** (`POST /api/v1/authorize`)
+- [x] **Epic 4 — Resource Module (Tenant-Scoped CRUD & Attribute Management)**
+  - [x] `Resource` JPA entity and Flyway migration (`V3__init_resources_table.sql`)
+  - [x] Compound uniqueness on `(client_id, resource_type, external_id)`
+  - [x] `ResourceService` — tenant-scoped create, get, list/filter by type, update attributes, delete
+  - [x] `ResourceController` — 6 REST endpoints under `/api/v1/resources`
+  - [x] Dynamic Jackson JSON attributes serialization/deserialization
+  - [x] Hard cross-tenant isolation (returns 404, never leaks existence across boundaries)
+  - [x] **175/175 tests green (100% pass rate)**
+- [x] **Epic 5 — Relationship Module (ReBAC Foundation: Roles, Hierarchy & Tenant-Scoped Tuples)**
+  - [x] `Relation` enum with explicit rank ordering (`OWNER > MANAGER > LEAD > MEMBER`)
+  - [x] Universal `Action` enum (`CREATE, READ, UPDATE, DELETE, APPROVE, REJECT`)
+  - [x] Deterministic `RelationHierarchy` 4×6 permission matrix
+  - [x] `Relationship` JPA entity and Flyway migration (`V4__init_relationships_table.sql`)
+  - [x] Compound uniqueness on `(client_id, subject_id, resource_id, relation)`
+  - [x] `RelationshipService` — tenant-scoped create, get by ID, filter by subject/resource, delete
+  - [x] `RelationshipController` — REST endpoints under `/api/v1/relationships`
+  - [x] Hard cross-tenant relational integrity (cannot link subjects/resources from other tenants)
+  - [x] **250/250 tests green (100% pass rate)**
+- [ ] **Epic 6 — Authorization Engine Core (`POST /api/v1/authorize`)** *(Next Up: Context Builder, ReBAC Evaluator, Engine Pipeline)*
 - [ ] **Epic 7 — ABAC & Business Rule Evaluators**
 - [ ] **Epic 8 — Audit Logging Module**
 - [ ] **Epic 9 — Observability & OpenTelemetry**
