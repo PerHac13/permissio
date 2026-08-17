@@ -8,7 +8,6 @@ import com.perhac.permissio.resource.entity.Resource;
 import com.perhac.permissio.resource.repository.ResourceRepository;
 import com.perhac.permissio.subject.entity.Subject;
 import com.perhac.permissio.subject.repository.SubjectRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,14 +113,6 @@ class RelationshipRepositoryTest {
                 .externalId("doc-b1")
                 .createdAt(Instant.now())
                 .build());
-    }
-
-    @AfterEach
-    void tearDown() {
-        relationshipRepository.deleteAll();
-        resourceRepository.deleteAll();
-        subjectRepository.deleteAll();
-        clientRepository.deleteAll();
     }
 
     @Test
