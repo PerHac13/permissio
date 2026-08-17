@@ -5,6 +5,8 @@ import com.perhac.permissio.authentication.dto.LoginRequest;
 import com.perhac.permissio.authentication.dto.RegisterRequest;
 import com.perhac.permissio.client.entity.Client;
 import com.perhac.permissio.client.repository.ClientRepository;
+import com.perhac.permissio.relationship.repository.RelationshipRepository;
+import com.perhac.permissio.resource.repository.ResourceRepository;
 import com.perhac.permissio.security.ApiKeyHasher;
 import com.perhac.permissio.subject.repository.SubjectRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +56,12 @@ class AuthControllerIntegrationTest {
         private SubjectRepository subjectRepository;
 
         @Autowired
+        private ResourceRepository resourceRepository;
+
+        @Autowired
+        private RelationshipRepository relationshipRepository;
+
+        @Autowired
         private ApiKeyHasher apiKeyHasher;
 
         private static final String RAW_API_KEY = "integration-test-api-key";
@@ -65,6 +73,8 @@ class AuthControllerIntegrationTest {
                                 .webAppContextSetup(webApplicationContext)
                                 .apply(springSecurity())
                                 .build();
+                relationshipRepository.deleteAll();
+                resourceRepository.deleteAll();
                 subjectRepository.deleteAll();
                 clientRepository.deleteAll();
 

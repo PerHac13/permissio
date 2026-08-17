@@ -2,6 +2,7 @@ package com.perhac.permissio.subject.repository;
 
 import com.perhac.permissio.client.entity.Client;
 import com.perhac.permissio.client.repository.ClientRepository;
+import com.perhac.permissio.relationship.repository.RelationshipRepository;
 import com.perhac.permissio.subject.entity.Subject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ class SubjectRepositoryTest {
         private SubjectRepository subjectRepository;
 
         @Autowired
+        private RelationshipRepository relationshipRepository;
+
+        @Autowired
         private ClientRepository clientRepository;
 
         private Client clientA;
@@ -37,6 +41,7 @@ class SubjectRepositoryTest {
 
         @BeforeEach
         void setUp() {
+                relationshipRepository.deleteAll();
                 subjectRepository.deleteAll();
                 clientRepository.deleteAll();
 

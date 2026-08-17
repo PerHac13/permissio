@@ -3,6 +3,8 @@ package com.perhac.permissio.subject.controller;
 import com.perhac.permissio.authentication.dto.RegisterRequest;
 import com.perhac.permissio.client.entity.Client;
 import com.perhac.permissio.client.repository.ClientRepository;
+import com.perhac.permissio.relationship.repository.RelationshipRepository;
+import com.perhac.permissio.resource.repository.ResourceRepository;
 import com.perhac.permissio.security.ApiKeyHasher;
 import com.perhac.permissio.subject.dto.CreateSubjectRequest;
 import com.perhac.permissio.subject.dto.UpdateSubjectAttributesRequest;
@@ -59,6 +61,12 @@ class SubjectControllerIntegrationTest {
     private SubjectRepository subjectRepository;
 
     @Autowired
+    private ResourceRepository resourceRepository;
+
+    @Autowired
+    private RelationshipRepository relationshipRepository;
+
+    @Autowired
     private ApiKeyHasher apiKeyHasher;
 
     private static final String RAW_API_KEY_A = "subject-test-api-key-a";
@@ -76,6 +84,8 @@ class SubjectControllerIntegrationTest {
                 .apply(springSecurity())
                 .build();
 
+        relationshipRepository.deleteAll();
+        resourceRepository.deleteAll();
         subjectRepository.deleteAll();
         clientRepository.deleteAll();
 

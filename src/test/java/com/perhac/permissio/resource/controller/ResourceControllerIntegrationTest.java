@@ -3,6 +3,7 @@ package com.perhac.permissio.resource.controller;
 import com.perhac.permissio.authentication.dto.RegisterRequest;
 import com.perhac.permissio.client.entity.Client;
 import com.perhac.permissio.client.repository.ClientRepository;
+import com.perhac.permissio.relationship.repository.RelationshipRepository;
 import com.perhac.permissio.resource.dto.CreateResourceRequest;
 import com.perhac.permissio.resource.dto.UpdateResourceAttributesRequest;
 import com.perhac.permissio.resource.repository.ResourceRepository;
@@ -62,6 +63,9 @@ class ResourceControllerIntegrationTest {
     private ResourceRepository resourceRepository;
 
     @Autowired
+    private RelationshipRepository relationshipRepository;
+
+    @Autowired
     private ApiKeyHasher apiKeyHasher;
 
     private static final String RAW_API_KEY_A = "resource-test-api-key-a";
@@ -79,6 +83,7 @@ class ResourceControllerIntegrationTest {
                 .apply(springSecurity())
                 .build();
 
+        relationshipRepository.deleteAll();
         resourceRepository.deleteAll();
         subjectRepository.deleteAll();
         clientRepository.deleteAll();
