@@ -1,8 +1,10 @@
 package com.perhac.permissio.relationship.controller;
 
+import com.perhac.permissio.audit.repository.AuditLogRepository;
 import com.perhac.permissio.authentication.dto.RegisterRequest;
 import com.perhac.permissio.client.entity.Client;
 import com.perhac.permissio.client.repository.ClientRepository;
+import com.perhac.permissio.policy.repository.PolicyRepository;
 import com.perhac.permissio.relationship.dto.CreateRelationshipRequest;
 import com.perhac.permissio.relationship.entity.Relation;
 import com.perhac.permissio.relationship.repository.RelationshipRepository;
@@ -66,6 +68,12 @@ class RelationshipControllerIntegrationTest {
     private RelationshipRepository relationshipRepository;
 
     @Autowired
+    private PolicyRepository policyRepository;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
+    @Autowired
     private ApiKeyHasher apiKeyHasher;
 
     private static final String RAW_API_KEY_A = "rel-test-api-key-a";
@@ -90,6 +98,8 @@ class RelationshipControllerIntegrationTest {
                 .apply(springSecurity())
                 .build();
 
+        auditLogRepository.deleteAll();
+        policyRepository.deleteAll();
         relationshipRepository.deleteAll();
         resourceRepository.deleteAll();
         subjectRepository.deleteAll();
@@ -119,6 +129,8 @@ class RelationshipControllerIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        auditLogRepository.deleteAll();
+        policyRepository.deleteAll();
         relationshipRepository.deleteAll();
         resourceRepository.deleteAll();
         subjectRepository.deleteAll();
