@@ -66,6 +66,53 @@ src/main/java/com/perhac/permissio/
 │       ├── CreateRelationshipRequest.java # DTO: { subjectId, resourceId, relation }
 │       └── RelationshipResponse.java   # Record: { id, clientId, subjectId, resourceId, relation, createdAt }
 │
+├── authorization                       # ⚡ Authorization Engine Pipeline (Epic 6 & 7)
+│   ├── controller/
+│   │   └── AuthorizationController.java# REST: POST /api/v1/authorize
+│   ├── engine/
+│   │   └── AuthorizationEngine.java    # Evaluator pipeline orchestrator + short-circuiting
+│   ├── evaluator/
+│   │   ├── PolicyEvaluator.java        # Evaluator strategy interface (@Order priority)
+│   │   ├── RebacEvaluator.java         # @Order(1) Highest-relation ReBAC permission matrix check
+│   │   ├── AbacEvaluator.java          # @Order(2) Dynamic attribute matching policies
+│   │   └── BusinessRuleEvaluator.java  # @Order(3) Time windows & environment conditions
+│   ├── model/
+│   │   ├── AuthorizationContext.java   # Resolved context record { subject, resource, action, relationships }
+│   │   └── Decision.java               # Decision record { allowed, reason, evaluator }
+│   ├── service/
+│   │   └── AuthorizationContextBuilder.java # Scoped context assembler with 404 safety
+│   └── dto/
+│       ├── AuthorizeRequest.java       # DTO: { subjectId, resourceId, action }
+│       └── AuthorizeResponse.java      # Record: { allowed, reason, evaluator }
+│
+├── policy                              # 📜 Policy Management & Expression Engine (Epic 7)
+│   ├── controller/
+│   │   └── PolicyController.java       # REST: /api/v1/policies/**
+│   ├── engine/
+│   │   └── PolicyEvaluationEngine.java # Sandboxed SpEL evaluator (read-only data binding, RCE-safe)
+│   ├── entity/
+│   │   ├── Policy.java                 # Policy JPA entity
+│   │   └── PolicyType.java             # Enum: ABAC, BUSINESS_RULE
+│   ├── repository/
+│   │   └── PolicyRepository.java       # Tenant-scoped policy queries by type/resourceType/action
+│   ├── service/
+│   │   └── PolicyService.java          # Policy CRUD with Sandboxed SpEL syntax validation
+│   └── dto/
+│       ├── CreatePolicyRequest.java    # DTO: { resourceType, action, policyType, expression }
+│       └── PolicyResponse.java         # Record: { id, clientId, resourceType, action, policyType, expression, createdAt }
+│
+├── audit                               # 📋 Immutable Decision Audit Logging (Epic 8)
+│   ├── controller/
+│   │   └── AuditController.java        # REST: GET /api/v1/audit-logs
+│   ├── entity/
+│   │   └── AuditLog.java               # Immutable Audit Log JPA entity with trace_id
+│   ├── repository/
+│   │   └── AuditLogRepository.java     # Tenant-scoped paginated and filtered queries
+│   ├── service/
+│   │   └── AuditService.java           # Durable audit logging with MDC traceId capture
+│   └── dto/
+│       └── AuditLogResponse.java       # Record: { id, clientId, subjectId, resourceId, action, allowed, reason, evaluator, traceId, evaluatedAt }
+│
 ├── common                              # 🌐 Shared Utilities & Error Envelopes
 │   ├── model/
 │   │   └── Action.java                 # Universal Actions: CREATE, READ, UPDATE, DELETE, APPROVE, REJECT
@@ -74,7 +121,8 @@ src/main/java/com/perhac/permissio/
 │       ├── ErrorResponse.java          # Record: { code, message, traceId }
 │       ├── ConflictException.java      # HTTP 409 Conflict
 │       ├── NotFoundException.java      # HTTP 404 Not Found
-│       └── UnauthorizedException.java  # HTTP 401 Unauthorized
+│       ├── UnauthorizedException.java  # HTTP 401 Unauthorized
+│       └── ValidationException.java    # HTTP 400 Bad Request
 │
 └── config                              # ⚙ Spring Configuration Beans
     ├── SecurityConfig.java             # Stateless SecurityFilterChain setup
@@ -100,7 +148,7 @@ src/main/java/com/perhac/permissio/
 
 ### 3. `subject` (The Actor Primitive)
 - **Purpose:** Manages actors (users, service accounts, agents) requesting permissions.
-- **Attributes:** Contains dynamic JSON attributes (department, clearance, team) stored in the database for ABAC policy evaluation.
+- **Attributes:** Dynamic JSON attributes (department, clearance, team) for ABAC evaluation.
 - **REST Endpoints (Epic 3):**
   - `POST /api/v1/subjects` — Create a subject (201 Created)
   - `GET /api/v1/subjects/{id}` — Get by internal UUID (200 OK)
@@ -113,7 +161,7 @@ src/main/java/com/perhac/permissio/
 ### 4. `resource` (The Target Primitive)
 - **Purpose:** Manages target entities (documents, projects, accounts, datasets) that subjects act upon.
 - **Compound Key:** Uniquely identified per tenant by `(clientId, resourceType, externalId)`.
-- **Attributes:** Contains dynamic JSON attributes (classification, department, owner) for ABAC policy evaluation.
+- **Attributes:** Dynamic JSON attributes (classification, department, sensitivity) for ABAC evaluation.
 - **REST Endpoints (Epic 4):**
   - `POST /api/v1/resources` — Create a resource (201 Created)
   - `GET /api/v1/resources/{id}` — Get by internal UUID (200 OK)
@@ -138,7 +186,36 @@ src/main/java/com/perhac/permissio/
   - `GET /api/v1/relationships(?subjectId={}&resourceId={})` — List and filter relationships (200 OK)
   - `DELETE /api/v1/relationships/{id}` — Delete relationship (204 No Content)
 
-### 6. `common`
+### 6. `authorization` (Evaluation Engine Core)
+- **Purpose:** Unifies ReBAC, ABAC, and Business Rule evaluation into a high-performance, short-circuiting decision engine.
+- **Orchestration Pipeline:**
+  1. `AuthorizationContextBuilder`: Resolves `Subject`, `Resource`, and all active `Relationship` tuples under `TenantContext.get()`. Returns 404 if entities do not exist under the tenant.
+  2. `RebacEvaluator` (`@Order(1)`): Determines highest relation rank. Denies immediately if the relation cannot perform the action.
+  3. `AbacEvaluator` (`@Order(2)`): Queries active tenant ABAC policies and evaluates them against subject and resource attributes using the sandboxed expression engine.
+  4. `BusinessRuleEvaluator` (`@Order(3)`): Queries active tenant business rules (e.g. time windows, business hours) against environmental variables.
+  5. `AuditService` Integration: Every decision (allow or short-circuit deny) is durably recorded in `audit_logs` with evaluator name and denial reason.
+- **REST Endpoints (Epic 6):**
+  - `POST /api/v1/authorize` — Evaluate permission decision (200 OK: `{ "allowed": true/false, "reason": "...", "evaluator": "..." }`)
+
+### 7. `policy` (Policy Management & Sandboxed SpEL)
+- **Purpose:** Manages dynamic attribute matching and environment policies per tenant.
+- **Security & Sandboxing:**
+  - Uses `SimpleEvaluationContext.forReadOnlyDataBinding().build()`.
+  - Strictly blocks Java reflection, method invocations, constructors, and class loading (`T(java.lang.Runtime)`).
+  - Safely exposes `#subject`, `#resource`, `#action`, and `#environment` maps.
+- **REST Endpoints (Epic 7):**
+  - `POST /api/v1/policies` — Create tenant policy (201 Created)
+  - `GET /api/v1/policies/{id}` — Get policy by ID (200 OK)
+  - `GET /api/v1/policies(?type={}&resourceType={})` — List tenant policies (200 OK)
+  - `DELETE /api/v1/policies/{id}` — Delete policy (204 No Content)
+
+### 8. `audit` (Immutable Decision Logging)
+- **Purpose:** Provides a durable, queryable record of every authorization check for compliance and security audits.
+- **Trace Correlation:** Automatically extracts `trace_id` from SLF4J MDC or Spring Observation.
+- **REST Endpoints (Epic 8):**
+  - `GET /api/v1/audit-logs(?subjectId={}&resourceId={}&page={}&size={})` — Paginated and filtered decision audit log query (200 OK)
+
+### 9. `common`
 - **Purpose:** Cross-cutting concerns such as standardized exception handling and domain models (`Action`).
 - **Uniform Error Response:**
   ```json
@@ -153,7 +230,7 @@ src/main/java/com/perhac/permissio/
 
 ## 🧱 Guidelines for Adding New Modules
 
-When implementing upcoming epics (`authorization`, `audit`, `observability`):
+When implementing upcoming epics (`observability`, `security hardening`, `zanzibar graph`):
 
 1. **Package per Primitive / Domain:** Create dedicated root packages under `com.perhac.permissio.<module_name>`.
 2. **Layered Structure:** Maintain standard separation:
@@ -163,3 +240,4 @@ When implementing upcoming epics (`authorization`, `audit`, `observability`):
    - `controller/`: REST endpoints with `@Valid` request DTOs
    - `dto/`: Immutable request/response records
 3. **Multi-Tenancy Guardrail:** Never query a repository using only a resource ID or subject ID without the accompanying `clientId`.
+4. **Integration Test Teardown:** Always tear down child tables in foreign key order (`audit_logs` ➔ `policies` ➔ `relationships` ➔ `resources` ➔ `subjects` ➔ `clients`).

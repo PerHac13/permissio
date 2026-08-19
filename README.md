@@ -29,10 +29,10 @@ In most architectures, authorization is fragmented: hardcoded role checks (`hasR
 
 ### How Permissio Solves This:
 1. **Centralized Decision Engine:** Exposes a single high-performance **`POST /api/v1/authorize`** endpoint.
-2. **Domain-Agnostic Primitives:** Translates any business entity (users, documents, medical records, financial assets) into **5 universal primitives**.
-3. **Multi-Model Support:** Unifies Role-Based (RBAC), Attribute-Based (ABAC), and Relationship-Based (ReBAC) authorization into a single short-circuiting pipeline.
+2. **Domain-Agnostic Primitives:** Translates any business entity (users, documents, medical records, financial assets) into universal primitives (`Subject`, `Resource`, `Relation`, `Action`, `Policy`).
+3. **Multi-Model Support:** Unifies Role-Based (RBAC), Attribute-Based (ABAC with Sandboxed SpEL), and Relationship-Based (ReBAC) authorization into a single short-circuiting pipeline.
 4. **Hard Multi-Tenant Isolation:** Consuming services are tenants, never code dependencies. Every piece of data is strictly isolated by `client_id`.
-5. **Immutable Audit Trail:** Append-only audit logging of every decision, reason code, and policy evaluator.
+5. **Immutable Audit Trail:** Append-only audit logging of every decision, reason code, evaluator, and trace ID correlation via **`GET /api/v1/audit-logs`**.
 
 ---
 
@@ -49,7 +49,7 @@ cd permissio
 # Run local dev server (Windows)
 .\mvnw.cmd spring-boot:run
 
-# Run local dev server (Linux / macOS)
+# Run local dev server (Linux / macOS / Git Bash)
 ./mvnw spring-boot:run
 ```
 
@@ -73,8 +73,9 @@ cd permissio
 - **Databases:**
   - **Dev / Test:** H2 In-Memory (PostgreSQL compatibility mode)
   - **Production:** PostgreSQL 16 (via Docker Compose or Cloud RDS)
-- **Migrations:** Flyway
+- **Migrations:** Flyway (`V1` through `V6`)
 - **Security:** Spring Security + JJWT (HMAC-SHA256) + Salted SHA-256 (API Keys) + BCrypt
+- **Policy Engine:** Sandboxed Spring Expression Language (SpEL) with `SimpleEvaluationContext` (RCE-safe)
 - **JSON Engine:** Jackson 3 (`tools.jackson.core:jackson-databind`)
 - **Testing:** JUnit 5, Mockito, AssertJ, Spring Test, JaCoCo (≥ 80% line coverage enforcement)
 
@@ -102,7 +103,6 @@ cd permissio
   - [x] `SubjectController` — 6 REST endpoints under `/api/v1/subjects`
   - [x] DTOs: `SubjectResponse`, `CreateSubjectRequest`, `UpdateSubjectAttributesRequest`
   - [x] Cross-tenant isolation: subjects invisible across tenants (returns 404, never leaks existence)
-  - [x] **125/125 tests green (100% pass rate)**
 - [x] **Epic 4 — Resource Module (Tenant-Scoped CRUD & Attribute Management)**
   - [x] `Resource` JPA entity and Flyway migration (`V3__init_resources_table.sql`)
   - [x] Compound uniqueness on `(client_id, resource_type, external_id)`
@@ -110,7 +110,6 @@ cd permissio
   - [x] `ResourceController` — 6 REST endpoints under `/api/v1/resources`
   - [x] Dynamic Jackson JSON attributes serialization/deserialization
   - [x] Hard cross-tenant isolation (returns 404, never leaks existence across boundaries)
-  - [x] **175/175 tests green (100% pass rate)**
 - [x] **Epic 5 — Relationship Module (ReBAC Foundation: Roles, Hierarchy & Tenant-Scoped Tuples)**
   - [x] `Relation` enum with explicit rank ordering (`OWNER > MANAGER > LEAD > MEMBER`)
   - [x] Universal `Action` enum (`CREATE, READ, UPDATE, DELETE, APPROVE, REJECT`)
@@ -120,11 +119,29 @@ cd permissio
   - [x] `RelationshipService` — tenant-scoped create, get by ID, filter by subject/resource, delete
   - [x] `RelationshipController` — REST endpoints under `/api/v1/relationships`
   - [x] Hard cross-tenant relational integrity (cannot link subjects/resources from other tenants)
-  - [x] **250/250 tests green (100% pass rate)**
-- [ ] **Epic 6 — Authorization Engine Core (`POST /api/v1/authorize`)** *(Next Up: Context Builder, ReBAC Evaluator, Engine Pipeline)*
-- [ ] **Epic 7 — ABAC & Business Rule Evaluators**
-- [ ] **Epic 8 — Audit Logging Module**
-- [ ] **Epic 9 — Observability & OpenTelemetry**
+- [x] **Epic 6 — Authorization Engine Core (`POST /api/v1/authorize`)**
+  - [x] `Decision` and `AuthorizationContext` domain records
+  - [x] `PolicyEvaluator` plugin interface with `@Order` chain execution
+  - [x] `RebacEvaluator` (priority 1) resolving highest relationship rank and matrix permissions
+  - [x] `AuthorizationContextBuilder` scoped to `TenantContext` with 404 non-existence safety
+  - [x] `AuthorizationEngine` orchestrator with fast short-circuiting on denial
+  - [x] `AuthorizationController` (`POST /api/v1/authorize`)
+- [x] **Epic 7 — ABAC & Business Rule Evaluators**
+  - [x] Flyway migration `V5__init_policies_table.sql` for tenant policies
+  - [x] Sandboxed SpEL engine (`PolicyEvaluationEngine`) using `SimpleEvaluationContext.forReadOnlyDataBinding()` (RCE-safe)
+  - [x] `Policy` JPA entity and `PolicyRepository`
+  - [x] `AbacEvaluator` (priority 2) matching subject/resource attributes
+  - [x] `BusinessRuleEvaluator` (priority 3) evaluating environmental conditions and time windows
+  - [x] Policy CRUD endpoints under `/api/v1/policies`
+- [x] **Epic 8 — Audit Logging Module**
+  - [x] Flyway migration `V6__init_audit_logs_table.sql` with `trace_id` column
+  - [x] `AuditLog` JPA entity and `AuditLogRepository`
+  - [x] `AuditService` capturing every decision (allow/deny), evaluator name, reason code, and MDC trace ID
+  - [x] Audit query API (`GET /api/v1/audit-logs`) with pagination and filtering
+- [ ] **Epic 9 — Observability & OpenTelemetry** *(Next Up: Spans, Metrics, MDC trace correlation)*
+- [ ] **Epic 10 — Security Hardening & RS256 JWT**
+- [ ] **Epic 11 — Tenant Isolation Contract Suite**
+- [ ] **Epic 12 — Documentation & Contract Stability**
 
 ---
 
