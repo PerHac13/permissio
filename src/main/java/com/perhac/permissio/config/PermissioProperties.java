@@ -2,6 +2,7 @@ package com.perhac.permissio.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +27,11 @@ public class PermissioProperties {
     @NestedConfigurationProperty
     private Observability observability = new Observability();
 
-    private final Environment environment;
+    @Autowired(required = false)
+    private Environment environment;
+
+    public PermissioProperties() {
+    }
 
     public PermissioProperties(Environment environment) {
         this.environment = environment;
