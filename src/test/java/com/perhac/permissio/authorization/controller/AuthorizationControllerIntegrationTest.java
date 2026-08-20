@@ -81,9 +81,6 @@ class AuthorizationControllerIntegrationTest {
     private static final String RAW_API_KEY_A = "authz-test-api-key-a";
     private static final String RAW_API_KEY_B = "authz-test-api-key-b";
 
-    private Client tenantA;
-    private Client tenantB;
-
     private String jwtTokenA;
     private String jwtTokenB;
 
@@ -106,13 +103,13 @@ class AuthorizationControllerIntegrationTest {
         subjectRepository.deleteAll();
         clientRepository.deleteAll();
 
-        tenantA = clientRepository.save(Client.builder()
+        clientRepository.save(Client.builder()
                 .name("Tenant A")
                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY_A))
                 .createdAt(Instant.now())
                 .build());
 
-        tenantB = clientRepository.save(Client.builder()
+        clientRepository.save(Client.builder()
                 .name("Tenant B")
                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY_B))
                 .createdAt(Instant.now())
@@ -502,8 +499,8 @@ class AuthorizationControllerIntegrationTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        String token = objectMapper.readTree(content).get("token").asText();
-        UUID subId = UUID.fromString(objectMapper.readTree(content).get("subjectId").asText());
+        String token = objectMapper.readTree(content).get("token").asString();
+        UUID subId = UUID.fromString(objectMapper.readTree(content).get("subjectId").asString());
 
         if (isTenantA) {
             this.subjectIdA = subId;
@@ -528,7 +525,7 @@ class AuthorizationControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asString();
     }
 
     private void createRelationship(String apiKey, String jwt, UUID subjectId, UUID resourceId, Relation relation) throws Exception {

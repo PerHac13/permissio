@@ -282,7 +282,7 @@ class ResourceServiceTest {
         List<ResourceResponse> result = resourceService.listResources(null);
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(ResourceResponse::externalId)
+        assertThat(result.stream().map(r -> r.externalId()).toList())
                 .containsExactlyInAnyOrder("doc-1", "folder-1");
 
         verify(resourceRepository).findAllByClientId(clientId);

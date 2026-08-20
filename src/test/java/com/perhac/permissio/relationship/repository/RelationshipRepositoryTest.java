@@ -222,7 +222,7 @@ class RelationshipRepositoryTest {
 
         List<Relationship> results = relationshipRepository.findByClientIdAndSubjectId(clientA.getId(), subjectA1.getId());
         assertThat(results).hasSize(2);
-        assertThat(results).extracting(Relationship::getResourceId)
+        assertThat(results.stream().map(rel -> rel.getResourceId()).toList())
                 .containsExactlyInAnyOrder(resourceA1.getId(), resourceA2.getId());
     }
 
@@ -232,7 +232,7 @@ class RelationshipRepositoryTest {
 
         List<Relationship> results = relationshipRepository.findByClientIdAndResourceId(clientA.getId(), resourceA1.getId());
         assertThat(results).hasSize(2);
-        assertThat(results).extracting(Relationship::getSubjectId)
+        assertThat(results.stream().map(rel -> rel.getSubjectId()).toList())
                 .containsExactlyInAnyOrder(subjectA1.getId(), subjectA2.getId());
     }
 

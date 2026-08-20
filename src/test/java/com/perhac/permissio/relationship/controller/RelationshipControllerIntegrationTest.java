@@ -80,8 +80,6 @@ class RelationshipControllerIntegrationTest {
     private static final String RAW_API_KEY_B = "rel-test-api-key-b";
 
     private Client tenantA;
-    private Client tenantB;
-
     private String jwtTokenA;
     private String jwtTokenB;
 
@@ -111,7 +109,7 @@ class RelationshipControllerIntegrationTest {
                 .createdAt(Instant.now())
                 .build());
 
-        tenantB = clientRepository.save(Client.builder()
+        clientRepository.save(Client.builder()
                 .name("Tenant B")
                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY_B))
                 .createdAt(Instant.now())
@@ -414,7 +412,7 @@ class RelationshipControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String tenantBRelId = objectMapper.readTree(bResult.getResponse().getContentAsString()).get("id").asText();
+        String tenantBRelId = objectMapper.readTree(bResult.getResponse().getContentAsString()).get("id").asString();
 
         // Tenant A tries to access Tenant B's relationship — returns 404
         mockMvc.perform(get("/api/v1/relationships/{id}", tenantBRelId)
@@ -439,7 +437,7 @@ class RelationshipControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String tenantBRelId = objectMapper.readTree(bResult.getResponse().getContentAsString()).get("id").asText();
+        String tenantBRelId = objectMapper.readTree(bResult.getResponse().getContentAsString()).get("id").asString();
 
         // Tenant A tries to delete Tenant B's relationship — returns 404
         mockMvc.perform(delete("/api/v1/relationships/{id}", tenantBRelId)
@@ -516,8 +514,8 @@ class RelationshipControllerIntegrationTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        String token = objectMapper.readTree(content).get("token").asText();
-        UUID subId = UUID.fromString(objectMapper.readTree(content).get("subjectId").asText());
+        String token = objectMapper.readTree(content).get("token").asString();
+        UUID subId = UUID.fromString(objectMapper.readTree(content).get("subjectId").asString());
 
         if (isTenantA) {
             this.subjectIdA = subId;
@@ -542,7 +540,7 @@ class RelationshipControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asString();
     }
 
     private String createRelationshipAndReturnId(UUID subjectId, UUID resourceId, Relation relation) throws Exception {
@@ -560,6 +558,6 @@ class RelationshipControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asString();
     }
 }

@@ -27,9 +27,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Instant;
-import java.util.UUID;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -76,8 +74,6 @@ class PolicyControllerIntegrationTest {
     private static final String RAW_API_KEY_B = "policy-key-b";
 
     private Client tenantA;
-    private Client tenantB;
-
     private String jwtTokenA;
     private String jwtTokenB;
 
@@ -101,7 +97,7 @@ class PolicyControllerIntegrationTest {
                 .createdAt(Instant.now())
                 .build());
 
-        tenantB = clientRepository.save(Client.builder()
+        clientRepository.save(Client.builder()
                 .name("Tenant B")
                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY_B))
                 .createdAt(Instant.now())
@@ -163,7 +159,7 @@ class PolicyControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String policyId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        String policyId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asString();
 
         // Tenant A can get it
         mockMvc.perform(get("/api/v1/policies/{id}", policyId)
@@ -197,7 +193,7 @@ class PolicyControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String policyId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+        String policyId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asString();
 
         mockMvc.perform(delete("/api/v1/policies/{id}", policyId)
                         .header("X-API-Key", RAW_API_KEY_A)
@@ -223,6 +219,6 @@ class PolicyControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        return objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asString();
     }
 }

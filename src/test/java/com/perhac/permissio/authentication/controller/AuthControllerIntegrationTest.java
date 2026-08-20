@@ -73,7 +73,6 @@ class AuthControllerIntegrationTest {
         private ApiKeyHasher apiKeyHasher;
 
         private static final String RAW_API_KEY = "integration-test-api-key";
-        private Client testClient;
 
         @BeforeEach
         void setUp() {
@@ -88,7 +87,7 @@ class AuthControllerIntegrationTest {
                 subjectRepository.deleteAll();
                 clientRepository.deleteAll();
 
-                testClient = clientRepository.save(Client.builder()
+                clientRepository.save(Client.builder()
                                 .name("Integration Test Tenant")
                                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY))
                                 .createdAt(Instant.now())
@@ -394,7 +393,7 @@ class AuthControllerIntegrationTest {
                                 .andReturn();
 
                 String registerToken = objectMapper.readTree(
-                                registerResult.getResponse().getContentAsString()).get("token").asText();
+                                registerResult.getResponse().getContentAsString()).get("token").asString();
                 assertThat(registerToken).isNotBlank();
                 assertThat(registerToken.split("\\.")).hasSize(3); // JWT format
 
@@ -412,15 +411,15 @@ class AuthControllerIntegrationTest {
                                 .andReturn();
 
                 String loginToken = objectMapper.readTree(
-                                loginResult.getResponse().getContentAsString()).get("token").asText();
+                                loginResult.getResponse().getContentAsString()).get("token").asString();
                 assertThat(loginToken).isNotBlank();
                 assertThat(loginToken.split("\\.")).hasSize(3); // JWT format
 
                 // Both should return the same subjectId
                 String registerSubjectId = objectMapper.readTree(
-                                registerResult.getResponse().getContentAsString()).get("subjectId").asText();
+                                registerResult.getResponse().getContentAsString()).get("subjectId").asString();
                 String loginSubjectId = objectMapper.readTree(
-                                loginResult.getResponse().getContentAsString()).get("subjectId").asText();
+                                loginResult.getResponse().getContentAsString()).get("subjectId").asString();
                 assertThat(registerSubjectId).isEqualTo(loginSubjectId);
         }
 }

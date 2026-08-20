@@ -79,8 +79,8 @@ class SubjectControllerIntegrationTest {
 
     private static final String RAW_API_KEY_A = "subject-test-api-key-a";
     private static final String RAW_API_KEY_B = "subject-test-api-key-b";
+
     private Client tenantA;
-    private Client tenantB;
 
     /** JWT token for an authenticated subject under tenant A */
     private String jwtTokenA;
@@ -105,7 +105,7 @@ class SubjectControllerIntegrationTest {
                 .createdAt(Instant.now())
                 .build());
 
-        tenantB = clientRepository.save(Client.builder()
+        clientRepository.save(Client.builder()
                 .name("Tenant B")
                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY_B))
                 .createdAt(Instant.now())
@@ -369,7 +369,7 @@ class SubjectControllerIntegrationTest {
                 .andReturn();
 
         return objectMapper.readTree(result.getResponse().getContentAsString())
-                .get("token").asText();
+                .get("token").asString();
     }
 
     /**
@@ -390,6 +390,6 @@ class SubjectControllerIntegrationTest {
                 .andReturn();
 
         return objectMapper.readTree(result.getResponse().getContentAsString())
-                .get("id").asText();
+                .get("id").asString();
     }
 }

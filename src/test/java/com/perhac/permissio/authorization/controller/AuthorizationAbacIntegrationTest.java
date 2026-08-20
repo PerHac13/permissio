@@ -76,7 +76,6 @@ class AuthorizationAbacIntegrationTest {
     private ApiKeyHasher apiKeyHasher;
 
     private static final String RAW_API_KEY = "abac-test-key";
-    private Client tenant;
     private String jwtToken;
     private UUID subjectId;
     private UUID resourceId;
@@ -95,7 +94,7 @@ class AuthorizationAbacIntegrationTest {
         subjectRepository.deleteAll();
         clientRepository.deleteAll();
 
-        tenant = clientRepository.save(Client.builder()
+        clientRepository.save(Client.builder()
                 .name("Acme Secure")
                 .apiKeyHash(apiKeyHasher.hash(RAW_API_KEY))
                 .createdAt(Instant.now())
@@ -119,7 +118,7 @@ class AuthorizationAbacIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        resourceId = UUID.fromString(objectMapper.readTree(resResult.getResponse().getContentAsString()).get("id").asText());
+        resourceId = UUID.fromString(objectMapper.readTree(resResult.getResponse().getContentAsString()).get("id").asString());
 
         // Grant alice MANAGER on the resource
         CreateRelationshipRequest relReq = CreateRelationshipRequest.builder()
@@ -237,8 +236,8 @@ class AuthorizationAbacIntegrationTest {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        this.subjectId = UUID.fromString(objectMapper.readTree(content).get("subjectId").asText());
-        return objectMapper.readTree(content).get("token").asText();
+        this.subjectId = UUID.fromString(objectMapper.readTree(content).get("subjectId").asString());
+        return objectMapper.readTree(content).get("token").asString();
     }
 
     private void updateSubjectAttributes(Map<String, Object> attributes) throws Exception {

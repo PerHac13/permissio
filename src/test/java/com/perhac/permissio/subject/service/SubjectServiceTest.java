@@ -226,7 +226,7 @@ class SubjectServiceTest {
         List<SubjectResponse> result = subjectService.listSubjects();
 
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(SubjectResponse::externalId)
+        assertThat(result.stream().map(s -> s.externalId()).toList())
                 .containsExactlyInAnyOrder("alice", "bob");
 
         // Verify query was scoped to current tenant

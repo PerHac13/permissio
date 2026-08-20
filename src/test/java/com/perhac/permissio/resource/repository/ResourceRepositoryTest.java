@@ -313,7 +313,7 @@ class ResourceRepositoryTest {
 
         List<Resource> clientAResources = resourceRepository.findAllByClientId(clientA.getId());
         assertThat(clientAResources).hasSize(2);
-        assertThat(clientAResources).extracting(Resource::getExternalId)
+        assertThat(clientAResources.stream().map(r -> r.getExternalId()).toList())
                 .containsExactlyInAnyOrder("doc-1", "folder-1");
     }
 
@@ -346,7 +346,7 @@ class ResourceRepositoryTest {
         List<Resource> docsOnly = resourceRepository.findAllByClientIdAndResourceType(
                 clientA.getId(), "DOCUMENT");
         assertThat(docsOnly).hasSize(2);
-        assertThat(docsOnly).extracting(Resource::getExternalId)
+        assertThat(docsOnly.stream().map(r -> r.getExternalId()).toList())
                 .containsExactlyInAnyOrder("doc-1", "doc-2");
     }
 
