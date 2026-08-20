@@ -4,7 +4,6 @@ import com.perhac.permissio.common.model.Action;
 import com.perhac.permissio.policy.entity.Policy;
 import com.perhac.permissio.policy.entity.PolicyType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +14,6 @@ import java.util.UUID;
  * <p>
  * Enforces tenant isolation by always requiring {@code clientId} in all queries.
  */
-@Repository
 public interface PolicyRepository extends JpaRepository<Policy, UUID> {
 
     /**

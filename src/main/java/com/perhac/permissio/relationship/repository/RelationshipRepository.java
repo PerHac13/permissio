@@ -3,7 +3,6 @@ package com.perhac.permissio.relationship.repository;
 import com.perhac.permissio.relationship.entity.Relation;
 import com.perhac.permissio.relationship.entity.Relationship;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +13,6 @@ import java.util.UUID;
  * <p>
  * Enforces tenant isolation by always requiring {@code clientId} in queries.
  */
-@Repository
 public interface RelationshipRepository extends JpaRepository<Relationship, UUID> {
 
     /**

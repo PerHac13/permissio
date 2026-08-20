@@ -2,7 +2,6 @@ package com.perhac.permissio.subject.repository;
 
 import com.perhac.permissio.subject.entity.Subject;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +12,6 @@ import java.util.UUID;
  * <p>
  * All queries are scoped by {@code clientId} to enforce tenant isolation.
  */
-@Repository
 public interface SubjectRepository extends JpaRepository<Subject, UUID> {
 
     Optional<Subject> findByClientIdAndExternalId(UUID clientId, String externalId);

@@ -44,8 +44,8 @@ public class RebacEvaluator implements PolicyEvaluator {
         }
 
         Optional<Relation> highestRelation = matchingRelationships.stream()
-                .map(Relationship::getRelation)
-                .max(Comparator.comparingInt(Relation::rank));
+                .map(rel -> rel.getRelation())
+                .max(Comparator.comparingInt(rel -> rel.rank()));
 
         if (highestRelation.isEmpty()) {
             return Decision.deny(REASON_NO_RELATIONSHIP, EVALUATOR_NAME);
