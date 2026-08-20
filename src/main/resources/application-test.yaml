@@ -12,8 +12,28 @@ spring:
   flyway:
     clean-disabled: false
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-},%X{clientId:-}]"
+
 permissio:
   jwt:
     secret: test-profile-secret-key-not-for-production-use-32chars
   api-key:
     salt: test-profile-salt-not-for-production-use
+  observability:
+    otel:
+      enabled: false
+    logging:
+      console:
+        enabled: true
+        structured: false

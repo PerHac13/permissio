@@ -13,8 +13,37 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id:-},%X{clientId:-}]"
+
 permissio:
   jwt:
     secret: ${PERMISSIO_JWT_SECRET}
   api-key:
     salt: ${PERMISSIO_API_KEY_SALT}
+  observability:
+    otel:
+      enabled: ${OTEL_ENABLED:true}
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4318}
+      protocol: ${OTEL_EXPORTER_OTLP_PROTOCOL:http/protobuf}
+      sampling-probability: ${OTEL_SAMPLING_PROBABILITY:1.0}
+      traces:
+        enabled: ${OTEL_TRACES_ENABLED:true}
+      metrics:
+        enabled: ${OTEL_METRICS_ENABLED:true}
+      logs:
+        enabled: ${OTEL_LOGS_ENABLED:false} # Option in config whether to emit logs to OTel
+    logging:
+      console:
+        enabled: ${LOGGING_CONSOLE_ENABLED:true} # Console log is up
+        structured: ${LOGGING_CONSOLE_STRUCTURED:true} # Structured JSON in production
