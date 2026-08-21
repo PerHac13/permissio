@@ -138,8 +138,14 @@ cd permissio
   - [x] `AuditLog` JPA entity and `AuditLogRepository`
   - [x] `AuditService` capturing every decision (allow/deny), evaluator name, reason code, and MDC trace ID
   - [x] Audit query API (`GET /api/v1/audit-logs`) with pagination and filtering
-- [ ] **Epic 9 — Observability & OpenTelemetry** *(Next Up: Spans, Metrics, MDC trace correlation)*
-- [ ] **Epic 10 — Security Hardening & RS256 JWT**
+- [x] **Epic 9 — Observability & OpenTelemetry**
+  - [x] Config-driven YAML observability (`permissio.observability.otel` & `logging`)
+  - [x] Option in YAML config to toggle emitting logs to OpenTelemetry OTLP exporter
+  - [x] Active console logging with optional structured JSON formatting
+  - [x] `TraceContextFilter` injecting `trace_id`, `span_id`, `clientId` into MDC and `X-Trace-Id` response header
+  - [x] OpenTelemetry manual spans around `AuthorizationEngine` and `PolicyEvaluator`s via `AuthorizationTracer`
+  - [x] Custom metrics: `authz_requests_total`, `authz_decision_duration_seconds`, `authz_denials_total` via `AuthorizationMetrics`
+- [ ] **Epic 10 — Security Hardening & RS256 JWT** *(Next Up)*
 - [ ] **Epic 11 — Tenant Isolation Contract Suite**
 - [ ] **Epic 12 — Documentation & Contract Stability**
 

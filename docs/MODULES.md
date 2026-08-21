@@ -113,6 +113,16 @@ src/main/java/com/perhac/permissio/
 │   └── dto/
 │       └── AuditLogResponse.java       # Record: { id, clientId, subjectId, resourceId, action, allowed, reason, evaluator, traceId, evaluatedAt }
 │
+├── observability                       # 🔭 Observability & OpenTelemetry (Epic 9)
+│   ├── config/
+│   │   └── OpenTelemetryConfig.java    # OTel condition beans & log export toggles
+│   ├── filter/
+│   │   └── TraceContextFilter.java     # MDC trace_id/span_id/clientId & X-Trace-Id header
+│   ├── metrics/
+│   │   └── AuthorizationMetrics.java   # Custom metrics: authz_requests_total, authz_decision_duration_seconds, authz_denials_total
+│   └── tracing/
+│       └── AuthorizationTracer.java    # Manual OTel spans & semantic attribute tagging
+│
 ├── common                              # 🌐 Shared Utilities & Error Envelopes
 │   ├── model/
 │   │   └── Action.java                 # Universal Actions: CREATE, READ, UPDATE, DELETE, APPROVE, REJECT
@@ -125,6 +135,7 @@ src/main/java/com/perhac/permissio/
 │       └── ValidationException.java    # HTTP 400 Bad Request
 │
 └── config                              # ⚙ Spring Configuration Beans
+    ├── PermissioProperties.java        # Centralized type-safe @ConfigurationProperties (JWT, API Keys, OTel, Logs)
     ├── SecurityConfig.java             # Stateless SecurityFilterChain setup
     ├── ApiKeyHasherConfig.java         # ApiKeyHasher bean configuration
     └── PasswordEncoderConfig.java      # BCryptPasswordEncoder bean configuration
@@ -215,7 +226,20 @@ src/main/java/com/perhac/permissio/
 - **REST Endpoints (Epic 8):**
   - `GET /api/v1/audit-logs(?subjectId={}&resourceId={}&page={}&size={})` — Paginated and filtered decision audit log query (200 OK)
 
-### 9. `common`
+### 9. `observability` (OpenTelemetry Traces, Metrics & Logs)
+- **Purpose:** Centralizes distributed tracing, custom authorization metrics, and structured log correlation.
+- **Config-Driven YAML:**
+  - `permissio.observability.otel.enabled` — Master switch for OpenTelemetry exporter registration.
+  - `permissio.observability.otel.endpoint` — OTLP collector endpoint (`http://localhost:4318`).
+  - `permissio.observability.otel.logs.enabled` — Option in config whether to emit logs to the OpenTelemetry OTLP exporter.
+  - `permissio.observability.logging.console.enabled` — Ensures console log remains active.
+  - `permissio.observability.logging.console.structured` — Switches between standard readable text and structured JSON.
+- **Components:**
+  - `TraceContextFilter`: Injects active trace context (`trace_id`, `span_id`, `clientId`) into SLF4J MDC and attaches `X-Trace-Id` response header.
+  - `AuthorizationMetrics`: Records `authz_requests_total`, `authz_decision_duration_seconds`, and `authz_denials_total` with Prometheus compatibility.
+  - `AuthorizationTracer`: Generates manual spans around `AuthorizationEngine` and each `PolicyEvaluator`.
+
+### 10. `common`
 - **Purpose:** Cross-cutting concerns such as standardized exception handling and domain models (`Action`).
 - **Uniform Error Response:**
   ```json
@@ -230,7 +254,7 @@ src/main/java/com/perhac/permissio/
 
 ## 🧱 Guidelines for Adding New Modules
 
-When implementing upcoming epics (`observability`, `security hardening`, `zanzibar graph`):
+When implementing upcoming epics (`security hardening`, `zanzibar graph`):
 
 1. **Package per Primitive / Domain:** Create dedicated root packages under `com.perhac.permissio.<module_name>`.
 2. **Layered Structure:** Maintain standard separation:
