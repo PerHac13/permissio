@@ -35,3 +35,8 @@ build/
 
 ### Environment ###
 .env
+
+### Dev / Test Seed Data ###
+src/main/resources/db/seed/
+src/main/resources/db/migration/*seed*
+src/test/java/com/perhac/permissio/config/DevDataSeed*
