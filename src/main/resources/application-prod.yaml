@@ -24,7 +24,8 @@ logging:
 
 permissio:
   jwt:
-    secret: ${PERMISSIO_JWT_SECRET}
+    private-key: ${PERMISSIO_JWT_PRIVATE_KEY}
+    public-key: ${PERMISSIO_JWT_PUBLIC_KEY}
   api-key:
     salt: ${PERMISSIO_API_KEY_SALT}
   observability:

@@ -41,16 +41,15 @@ public class PermissioProperties {
     public void validate() {
         boolean isDevOrTest = environment.matchesProfiles("dev", "test");
 
-        if (jwt.getSecret() == null || jwt.getSecret().isBlank()) {
+        // RS256 key validation: required in non-dev/test unless auto-generated
+        boolean hasRsaKeys = hasValue(jwt.getPrivateKey()) && hasValue(jwt.getPublicKey());
+        if (!isDevOrTest && !hasRsaKeys) {
             throw new IllegalStateException(
-                "permissio.jwt.secret is not set. Set PERMISSIO_JWT_SECRET env var."
+                "permissio.jwt.private-key and permissio.jwt.public-key must be set in non-dev/test profiles. "
+                + "Set PERMISSIO_JWT_PRIVATE_KEY and PERMISSIO_JWT_PUBLIC_KEY env vars with PEM-encoded RSA keys."
             );
         }
-        if (jwt.getSecret().length() < 32) {
-            throw new IllegalStateException(
-                "permissio.jwt.secret must be at least 32 characters for HMAC-SHA256."
-            );
-        }
+
         if (apiKey.getSalt() == null || apiKey.getSalt().isBlank()) {
             throw new IllegalStateException(
                 "permissio.api-key.salt is not set. Set PERMISSIO_API_KEY_SALT env var."
@@ -58,25 +57,42 @@ public class PermissioProperties {
         }
 
         if (!isDevOrTest) {
-            if (jwt.getSecret().contains("dev-secret-key")
-                    || jwt.getSecret().contains("test-profile-secret")
-                    || apiKey.getSalt().contains("dev-salt")
+            if (apiKey.getSalt().contains("dev-salt")
                     || apiKey.getSalt().contains("test-profile-salt")) {
                 throw new IllegalStateException(
-                    "Detected dev/test placeholder secret/salt while running outside dev/test profiles. "
+                    "Detected dev/test placeholder salt while running outside dev/test profiles. "
                     + "Refusing to start."
                 );
             }
         }
     }
 
+    private boolean hasValue(String value) {
+        return value != null && !value.isBlank();
+    }
+
     @Data
     public static class Jwt {
         /**
-         * Secret key for signing and verifying JWT tokens (min 32 characters for HMAC-SHA256).
-         * Must be supplied externally — no hardcoded default in non-dev environments.
+         * @deprecated Use {@code privateKey}/{@code publicKey} for RS256 signing.
+         * Retained for backward-compatible configuration parsing only.
          */
+        @Deprecated(since = "1.0", forRemoval = true)
         private String secret;
+
+        /**
+         * PEM-encoded RSA private key (PKCS#8 format) for signing JWTs with RS256.
+         * Can include or omit PEM header/footer lines.
+         * In dev/test profiles, omitting this causes a transient key pair to be auto-generated.
+         */
+        private String privateKey;
+
+        /**
+         * PEM-encoded RSA public key (X.509 format) for verifying JWTs with RS256.
+         * Can include or omit PEM header/footer lines.
+         * In dev/test profiles, omitting this causes a transient key pair to be auto-generated.
+         */
+        private String publicKey;
 
         /**
          * JWT token expiration time in milliseconds (default: 15 minutes = 900,000 ms).
