@@ -1,23 +1,27 @@
-# 🛠 Permissio — Developer Guide & Local Setup
+# Permissio — Developer Guide & Local Setup
 
 > Practical instructions for running, testing, building, and configuring Permissio locally.
 
 ---
 
-## ⚡ Quick Commands Cheat Sheet
+## Quick Commands Cheat Sheet
 
 | Task | PowerShell / Windows | Linux / macOS / Bash | Notes |
 |---|---|---|---|
 | **Run Dev Server** | `.\mvnw.cmd spring-boot:run` | `./mvnw spring-boot:run` | Runs in `dev` profile with in-memory H2 |
 | **Run Fast Unit Tests** | `.\mvnw.cmd test` | `./mvnw test` | Fast execution using H2 test DB |
 | **Run Full Verification** | `.\mvnw.cmd verify` | `./mvnw verify` | Runs all tests + JaCoCo 80% coverage check |
-| **Package JAR** | `.\mvnw.cmd clean package -DskipTests` | `./mvnw clean package -DskipTests` | Generates fat JAR in `target/` |
-| **Start Docker Postgres** | `docker compose up -d` | `docker compose up -d` | Spins up PostgreSQL 16 on port 5432 |
-| **Run Production Profile**| `.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod` | `./mvnw spring-boot:run -Dspring-boot.run.profiles=prod` | Connects to PostgreSQL using `.env` |
+| **Start Docker Stack** | `docker compose up -d` | `docker compose up -d` | Spins up Permissio + Postgres + OTel + Jaeger |
+| **Seed Mock Dataset** | `.\scripts\seed-data.ps1` | `./scripts/seed-data.sh` | Populates Postgres with 3 enterprise tenants & data |
+| **Run Independence Test** | `.\scripts\independence-acceptance.ps1` | `./scripts/independence-acceptance.sh` | Spins up Docker, registers tenant, validates full flow |
+| **Fast Smoke Benchmark** | `bash ./scripts/run-perf-test.sh --smoke` | `./scripts/run-perf-test.sh --smoke` | Rapid 25-request latency check |
+| **Full Latency Benchmark**| `bash ./scripts/run-perf-test.sh` | `./scripts/run-perf-test.sh` | Measures p50/p90/p95/p99 latency (p95 < 150ms SLA) |
+| **Run k6 Smoke Test** | `k6 run perf/load-test.js -e SCENARIO=smoke` | `k6 run perf/load-test.js -e SCENARIO=smoke` | 5-second fast verification |
+| **Run k6 Load Test** | `k6 run perf/load-test.js -e SCENARIO=load` | `k6 run perf/load-test.js -e SCENARIO=load` | 50 concurrent user sustained load test |
 
 ---
 
-## 🗄 Database & Environment Profiles
+## Database & Environment Profiles
 
 Permissio supports seamless switching between databases using Spring Boot profiles without any code modifications:
 
@@ -57,7 +61,7 @@ Permissio supports seamless switching between databases using Spring Boot profil
 
 ---
 
-## 🔑 Environment Variables (`.env`)
+## Environment Variables (`.env`)
 
 Permissio uses `spring-dotenv` to load environment variables from `.env` at startup.
 
@@ -66,7 +70,7 @@ Copy the template to get started:
 cp .env.example .env
 ```
 
-## 📊 Code Coverage & JaCoCo Gate
+## Code Coverage & JaCoCo Gate
 
 Permissio enforces a strict **≥ 80% line coverage threshold** across core packages.
 

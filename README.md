@@ -1,4 +1,4 @@
-# 🛡 Permissio
+# Permissio
 
 > **A standalone, domain-agnostic authorization service** combining **RBAC**, **ABAC**, and **ReBAC** into a unified, high-performance evaluation pipeline with a future migration path to a **Zanzibar-style relationship graph**.
 
@@ -9,21 +9,24 @@
 
 ---
 
-## 🧭 Documentation Directory
+## Documentation Directory
 
-To keep documentation clean and maintainable as the codebase expands, detailed technical documentation has been modularized:
+Detailed technical documentation has been modularized:
 
 | Document | Description |
 |---|---|
-| **[🏗 Architecture & Authorization Pipeline](docs/ARCHITECTURE.md)** | Core primitives (`Subject`, `Resource`, `Relation`, `Action`, `Policy`), ReBAC hierarchy, and 4-stage decision pipeline. |
-| **[🛠 Development & Local Setup Guide](docs/DEVELOPMENT.md)** | Terminal commands cheat sheet, H2 vs PostgreSQL profile configuration, `.env` setup, and JaCoCo coverage guide. |
-| **[📂 Project Structure & Module Directory](docs/MODULES.md)** | Codebase package structure, class responsibilities, filter chain flow, and conventions for new modules. |
-| **[📦 Dependencies & Build Reference Guide](.reference/Permissio-Dependencies-Guide.md)** | Detailed breakdown of every starter, library, and plugin declared in `pom.xml`. |
-| **[📋 Agile & TDD Backlog](.reference/Permissio-Backlog.md)** | Comprehensive roadmap, sprint grouping, and progress across all epics (0 through 12). |
+| **[High-Level Design (HLD)](docs/HLD_DESIGN.md)** | System ecosystem architecture with interactive clickable Mermaid diagrams linking to LLD components. |
+| **[UML Diagrams & Low-Level Design (LLD)](docs/UML_LLD_DESIGN.md)** | Detailed Mermaid.js specifications (ERD, Filter Chain Sequence, Engine Class Diagram, Decision Tree, SpEL Sandbox). |
+| **[Client Integration & Setup Guide](docs/CLIENT_INTEGRATION_GUIDE.md)** | Step-by-step client onboarding, 5-step workflow, and multi-language SDK examples (Java, TypeScript, Python, cURL). |
+| **[Developer API Reference & Contract Spec](docs/API_REFERENCE.md)** | Exhaustive endpoint documentation, schemas, security headers, ReBAC matrix, and SpEL policy guides. |
+| **[Architecture & Authorization Pipeline](docs/ARCHITECTURE.md)** | Core primitives (`Subject`, `Resource`, `Relation`, `Action`, `Policy`), ReBAC hierarchy, and 4-stage decision pipeline. |
+| **[Engineering Backlog & Roadmap](docs/ROADMAP_BACKLOG.md)** | Complete breakdown of Epics 0 through 12, TDD verification status, and deliverables. |
+| **[Development & Local Setup Guide](docs/DEVELOPMENT.md)** | Terminal commands cheat sheet, H2 vs PostgreSQL profile configuration, `.env` setup, and JaCoCo coverage guide. |
+| **[Project Structure & Module Directory](docs/MODULES.md)** | Codebase package structure, class responsibilities, filter chain flow, and conventions for new modules. |
 
 ---
 
-## 🎯 The Core Problem & Solution
+## The Core Problem & Solution
 
 In most architectures, authorization is fragmented: hardcoded role checks (`hasRole('ADMIN')`) are scattered throughout controllers, services, and SQL queries. This makes hierarchical relationships (*"Can a Project Lead edit documents in Project #10?"*) or contextual conditions (*"Can a Manager approve expenses during working hours?"*) difficult to maintain and verify.
 
@@ -36,7 +39,7 @@ In most architectures, authorization is fragmented: hardcoded role checks (`hasR
 
 ---
 
-## ⚡ Quickstart in 60 Seconds
+## Quickstart in 60 Seconds
 
 ### 1. Clone & Run (In-Memory Dev Mode)
 Permissio boots out of the box with zero external dependencies using an embedded H2 database:
@@ -65,7 +68,7 @@ cd permissio
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Language:** Java 21 (LTS) — Records, Pattern Matching, Sealed Types
 - **Framework:** Spring Boot 4.1.0 (latest)
@@ -74,14 +77,14 @@ cd permissio
   - **Dev / Test:** H2 In-Memory (PostgreSQL compatibility mode)
   - **Production:** PostgreSQL 16 (via Docker Compose or Cloud RDS)
 - **Migrations:** Flyway (`V1` through `V6`)
-- **Security:** Spring Security + JJWT (HMAC-SHA256) + Salted SHA-256 (API Keys) + BCrypt
+- **Security:** Spring Security + JJWT (RS256 RSA Asymmetric) + Salted SHA-256 (API Keys) + BCrypt
 - **Policy Engine:** Sandboxed Spring Expression Language (SpEL) with `SimpleEvaluationContext` (RCE-safe)
 - **JSON Engine:** Jackson 3 (`tools.jackson.core:jackson-databind`)
 - **Testing:** JUnit 5, Mockito, AssertJ, Spring Test, JaCoCo (≥ 80% line coverage enforcement)
 
 ---
 
-## 📊 Roadmap & Milestone Progress
+## Roadmap & Milestone Progress
 
 - [x] **Epic 0 — Project Bootstrap & Infrastructure**
   - [x] Spring Boot 4.1.0 + Java 21 setup
@@ -95,7 +98,7 @@ cd permissio
   - [x] `ApiKeyAuthenticationFilter` with automatic tenant scoping
 - [x] **Epic 2 — Authentication & JWT Module (`authentication`, `security`)**
   - [x] `Subject` JPA entity and Flyway migration (`V2__init_subjects_table.sql`)
-  - [x] BCrypt password hashing & HMAC-SHA256 `JwtTokenProvider`
+  - [x] BCrypt password hashing & RS256 `JwtTokenProvider`
   - [x] `JwtAuthenticationFilter` with Bearer token validation
   - [x] Registration & login endpoints (`/api/v1/auth/register`, `/api/v1/auth/login`)
 - [x] **Epic 3 — Subject Module (Tenant-Scoped CRUD & Attributes)**
@@ -145,12 +148,26 @@ cd permissio
   - [x] `TraceContextFilter` injecting `trace_id`, `span_id`, `clientId` into MDC and `X-Trace-Id` response header
   - [x] OpenTelemetry manual spans around `AuthorizationEngine` and `PolicyEvaluator`s via `AuthorizationTracer`
   - [x] Custom metrics: `authz_requests_total`, `authz_decision_duration_seconds`, `authz_denials_total` via `AuthorizationMetrics`
-- [ ] **Epic 10 — Security Hardening & RS256 JWT** *(Next Up)*
-- [ ] **Epic 11 — Tenant Isolation Contract Suite**
-- [ ] **Epic 12 — Documentation & Contract Stability**
+- [x] **Epic 10 — Security Hardening & RS256 JWT**
+  - [x] Asymmetric RS256 JWT signing with automatic transient key-pair generator in dev/test (`RsaKeyProvider`)
+  - [x] Algorithm confusion protection (HS256 rejection test)
+  - [x] Exhaustive Bean Validation integration test suite across all request DTOs (`BeanValidationIntegrationTest`)
+  - [x] Global exception handler completeness (`GlobalExceptionHandler` + `ForbiddenException`)
+  - [x] API key log sanitization test (`ApiKeyLogSanitizationTest`)
+- [x] **Epic 11 — Tenant Isolation Contract Suite**
+  - [x] Two-client isolation test for Subjects (`SubjectIsolationTest`)
+  - [x] Two-client isolation test for Resources (`ResourceIsolationTest`)
+  - [x] Two-client isolation test for Relationships (`RelationshipIsolationTest`)
+  - [x] Crafted-ID attack test with 404 existence leakage protection (`CraftedIdAttackTest`)
+  - [x] Full end-to-end Independence Acceptance test with zero external dependencies (`IndependenceAcceptanceTest`)
+- [x] **Epic 12 — Documentation & Contract Stability**
+  - [x] OpenAPI 3 + Swagger UI integration (`springdoc-openapi-starter-webmvc-ui` + `OpenApiSmokeTest`)
+  - [x] `/authorize` request/response JSON contract locking test (`AuthorizeContractTest`)
+  - [x] Complete Developer API Reference & Technical Specification (`docs/API_REFERENCE.md`)
+  - [x] High-Level Design (HLD) & Low-Level Design (LLD) specifications (`docs/HLD_DESIGN.md`, `docs/UML_LLD_DESIGN.md`)
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the Apache 2.0 License.
