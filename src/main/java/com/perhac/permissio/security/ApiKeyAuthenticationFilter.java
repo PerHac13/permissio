@@ -60,7 +60,9 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         // Auth endpoints (register/login) DO require X-API-Key for tenant context
         return path.startsWith("/actuator/")
-                || path.startsWith("/h2-console");
+                || path.startsWith("/h2-console")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs");
     }
 
     private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
