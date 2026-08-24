@@ -12,6 +12,7 @@ The following diagram illustrates how external consuming services interact with 
 > Click on any component box below to jump directly into its **Low-Level Design (LLD)** specification.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#3b82f6', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart TB
     subgraph Clients["Consuming Client Ecosystem (Tenants)"]
         ClientApp1["Microservice A<br/>(FinTech Service)"]
@@ -68,10 +69,10 @@ flowchart TB
     click AuditLogger "UML_LLD_DESIGN.md#1-multi-tenant-entity-relationship-diagram-erd" "Go to LLD: Audit Log Schema"
     click OTelExporter "UML_LLD_DESIGN.md#2-spring-security--multi-tenant-filter-chain" "Go to LLD: Trace Context & MDC Correlation"
 
-    classDef ingressStyle fill:#cce5ff,stroke:#004085,stroke-width:2px;
-    classDef engineStyle fill:#d4edda,stroke:#155724,stroke-width:2px;
-    classDef dataStyle fill:#fff3cd,stroke:#856404,stroke-width:2px;
-    classDef teleStyle fill:#f8d7da,stroke:#721c24,stroke-width:2px;
+    classDef ingressStyle fill:#93c5fd,stroke:#1e40af,stroke-width:2px,color:#1e1e1e;
+    classDef engineStyle fill:#86efac,stroke:#166534,stroke-width:2px,color:#1e1e1e;
+    classDef dataStyle fill:#fde68a,stroke:#92400e,stroke-width:2px,color:#1e1e1e;
+    classDef teleStyle fill:#fca5a5,stroke:#991b1b,stroke-width:2px,color:#1e1e1e;
 
     class SecurityFilter,KeyProvider ingressStyle;
     class ContextBuilder,AuthzPipeline,SpelEngine engineStyle;
@@ -84,6 +85,7 @@ flowchart TB
 ## 2. Subsystem Breakdown & Architecture Deep Dive
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 graph TD
     subgraph S1["1. INGRESS & IDENTITY SUBSYSTEM"]
         A1[Client Request] --> A2[TraceContextFilter]
@@ -128,6 +130,7 @@ graph TD
 In Permissio, tenants are cryptographically and relationally isolated:
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart LR
     subgraph RequestContext["Request Scoping"]
         HTTP[Incoming Request] --> Filter[ApiKey Filter]
@@ -145,7 +148,7 @@ flowchart LR
         TenantA -.->|Attacker attempts guessing UUID from Tenant B| Guard[404 NOT_FOUND<br/>Zero Existence Leaks]
     end
 
-    classDef tenant fill:#e8f4f8,stroke:#17a2b8,stroke-width:2px;
+    classDef tenant fill:#67e8f9,stroke:#0e7490,stroke-width:2px,color:#1e1e1e;
     class TenantA,TenantB,TenantC tenant;
 ```
 
@@ -156,6 +159,7 @@ flowchart LR
 Permissio was architected specifically to allow a seamless zero-downtime migration from relational ReBAC (Phase 1) to a full Zanzibar-style distributed relationship graph (Phase 2):
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart TD
     subgraph Phase1["Phase 1: Present (Layered Monolith + Relational Tuples)"]
         P1Engine[Authorization Engine] --> P1Store[(PostgreSQL 16<br/>Relationships Table)]

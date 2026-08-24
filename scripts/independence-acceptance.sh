@@ -21,8 +21,8 @@ if [ -z "$PERMISSIO_JWT_PRIVATE_KEY" ] || [ -z "$PERMISSIO_JWT_PUBLIC_KEY" ]; th
     openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$TEMP_DIR/priv.pem" 2>/dev/null
     openssl rsa -pubout -in "$TEMP_DIR/priv.pem" -out "$TEMP_DIR/pub.pem" 2>/dev/null
     
-    export PERMISSIO_JWT_PRIVATE_KEY=$(base64 -w 0 < "$TEMP_DIR/priv.pem" 2>/dev/null || base64 < "$TEMP_DIR/priv.pem" | tr -d '\n')
-    export PERMISSIO_JWT_PUBLIC_KEY=$(base64 -w 0 < "$TEMP_DIR/pub.pem" 2>/dev/null || base64 < "$TEMP_DIR/pub.pem" | tr -d '\n')
+    export PERMISSIO_JWT_PRIVATE_KEY=$(grep -v -- "-----" "$TEMP_DIR/priv.pem" | tr -d '\r\n')
+    export PERMISSIO_JWT_PUBLIC_KEY=$(grep -v -- "-----" "$TEMP_DIR/pub.pem" | tr -d '\r\n')
     rm -rf "$TEMP_DIR"
 fi
 

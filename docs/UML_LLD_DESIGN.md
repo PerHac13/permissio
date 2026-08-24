@@ -11,6 +11,7 @@
 This diagram models the database schema, foreign key relationships, compound unique constraints, and tenant anchoring across PostgreSQL tables.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 erDiagram
     CLIENTS ||--o{ SUBJECTS : "owns (1:N)"
     CLIENTS ||--o{ RESOURCES : "owns (1:N)"
@@ -85,6 +86,7 @@ erDiagram
 Sequence of request interception, MDC correlation, tenant context resolution, and RS256 JWT validation.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e', 'actorTextColor': '#1e1e1e', 'signalTextColor': '#1e1e1e', 'actorBkg': '#93c5fd', 'actorBorder': '#1e40af', 'activationBkgColor': '#dbeafe', 'activationBorderColor': '#3b82f6', 'sequenceNumberColor': '#ffffff', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#1e1e1e'}}}%%
 sequenceDiagram
     autonumber
     actor Client as Consuming Client Service
@@ -147,6 +149,7 @@ sequenceDiagram
 The object-oriented design of the authorization engine, evaluator plugin chain, and domain models.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 classDiagram
     class PolicyEvaluator {
         <<interface>>
@@ -245,6 +248,7 @@ classDiagram
 Step-by-step decision workflow with short-circuiting logic and audit integration.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart TD
     Start([Incoming Request: POST /api/v1/authorize]) --> Step1[1. Resolve Context in TenantContext]
     Step1 --> CheckEntities{Subject & Resource<br/>exist in Tenant?}
@@ -278,9 +282,9 @@ flowchart TD
     Audit --> Metrics[6. Increment Metrics & Spans<br/>authz_requests_total, authz_decision_duration_seconds]
     Metrics --> Response([Return JSON: 200 OK<br/>allowed: true / false])
 
-    classDef allowStyle fill:#d4edda,stroke:#28a745,stroke-width:2px;
-    classDef denyStyle fill:#f8d7da,stroke:#dc3545,stroke-width:2px;
-    classDef stepStyle fill:#e2e3e5,stroke:#383d41,stroke-width:1px;
+    classDef allowStyle fill:#86efac,stroke:#16a34a,stroke-width:2px,color:#1e1e1e;
+    classDef denyStyle fill:#fca5a5,stroke:#dc2626,stroke-width:2px,color:#1e1e1e;
+    classDef stepStyle fill:#d1d5db,stroke:#374151,stroke-width:1px,color:#1e1e1e;
 
     class Allow allowStyle;
     class Deny1,Deny2,Deny3 denyStyle;
@@ -294,6 +298,7 @@ flowchart TD
 Visualizing key configuration resolution across development, testing, and production.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart LR
     Start([Application Startup]) --> CheckProfile{Spring Profile?}
     
@@ -312,8 +317,8 @@ flowchart LR
     Ready --> Verify[Public Key -> Verifies Incoming Bearer Tokens]
     Verify --> ConfuseBlock[Explicit Jwts.SIG.RS256 Requirement<br/>Blocks HS256 Algorithm Confusion Attacks]
 
-    classDef success fill:#d4edda,stroke:#28a745,stroke-width:2px;
-    classDef fail fill:#f8d7da,stroke:#dc3545,stroke-width:2px;
+    classDef success fill:#86efac,stroke:#16a34a,stroke-width:2px,color:#1e1e1e;
+    classDef fail fill:#fca5a5,stroke:#dc2626,stroke-width:2px,color:#1e1e1e;
     class Ready,Sign,Verify,ConfuseBlock success;
     class FatalError fail;
 ```
@@ -325,6 +330,7 @@ flowchart LR
 How Permissio isolates policy evaluation to prevent Remote Code Execution (RCE).
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart TD
     subgraph Sandboxed Context
         Context[SimpleEvaluationContext<br/>forReadOnlyDataBinding]
@@ -352,8 +358,8 @@ flowchart TD
         Att3[System.exit] -.->|BLOCKED| Error
     end
 
-    classDef safe fill:#d1ecf1,stroke:#0c5460,stroke-width:1px;
-    classDef block fill:#f8d7da,stroke:#721c24,stroke-width:1px;
+    classDef safe fill:#67e8f9,stroke:#0891b2,stroke-width:1px,color:#1e1e1e;
+    classDef block fill:#fca5a5,stroke:#991b1b,stroke-width:1px,color:#1e1e1e;
     class Context,MapSub,MapRes,MapAct,MapEnv,Result safe;
     class Att1,Att2,Att3,Error block;
 ```

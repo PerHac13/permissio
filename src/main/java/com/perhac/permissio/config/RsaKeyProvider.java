@@ -73,8 +73,7 @@ public class RsaKeyProvider {
 
     private static RSAPrivateKey decodePrivateKey(String pem) {
         try {
-            String cleaned = stripPemHeaders(pem);
-            byte[] keyBytes = Base64.getDecoder().decode(cleaned);
+            byte[] keyBytes = extractDerBytes(pem);
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
             KeyFactory factory = KeyFactory.getInstance("RSA");
             return (RSAPrivateKey) factory.generatePrivate(spec);
@@ -85,14 +84,43 @@ public class RsaKeyProvider {
 
     private static RSAPublicKey decodePublicKey(String pem) {
         try {
-            String cleaned = stripPemHeaders(pem);
-            byte[] keyBytes = Base64.getDecoder().decode(cleaned);
+            byte[] keyBytes = extractDerBytes(pem);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
             KeyFactory factory = KeyFactory.getInstance("RSA");
             return (RSAPublicKey) factory.generatePublic(spec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new IllegalStateException("Failed to decode RSA public key from PEM", e);
         }
+    }
+
+    /**
+     * Extracts raw DER bytes from any format:
+     * 1. Direct Base64-encoded DER
+     * 2. Raw PEM string with headers/footers
+     * 3. Base64-encoded PEM file (e.g. from CI/env variables)
+     */
+    private static byte[] extractDerBytes(String input) {
+        if (input == null || input.isBlank()) {
+            throw new IllegalArgumentException("Key content must not be blank");
+        }
+        String cleaned = input.trim();
+
+        // Check if the input is a Base64-encoded string that wraps a PEM file
+        try {
+            byte[] firstDecode = Base64.getDecoder().decode(cleaned.replaceAll("\\s+", ""));
+            String asText = new String(firstDecode, java.nio.charset.StandardCharsets.UTF_8);
+            if (asText.contains("BEGIN")) {
+                cleaned = asText;
+            } else {
+                // If it doesn't contain PEM markers, it was already raw Base64 DER bytes
+                return firstDecode;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Not a valid base64 string (contains '-' or other non-base64 characters) — proceed as raw PEM
+        }
+
+        String stripped = stripPemHeaders(cleaned);
+        return Base64.getDecoder().decode(stripped);
     }
 
     /**
@@ -104,6 +132,8 @@ public class RsaKeyProvider {
                 .replace("-----END RSA PRIVATE KEY-----", "")
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
+                .replace("-----BEGIN RSA PUBLIC KEY-----", "")
+                .replace("-----END RSA PUBLIC KEY-----", "")
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s+", "");
