@@ -138,6 +138,14 @@ try {
     Write-Host "SUCCESS: All Independence Acceptance Checks Passed 100%!" -ForegroundColor Green
     Write-Host "=================================================================" -ForegroundColor Green
 
+} catch {
+    Write-Host ""
+    Write-Host "=================================================================" -ForegroundColor Red
+    Write-Host "[DEBUG] ACCEPTANCE TEST FAILED - CONTAINER LOGS:" -ForegroundColor Red
+    Write-Host "=================================================================" -ForegroundColor Red
+    docker compose logs --tail=150
+    Write-Host "=================================================================" -ForegroundColor Red
+    throw
 } finally {
     Write-Host "Tearing down Docker Compose environment..." -ForegroundColor Yellow
     docker compose down -v

@@ -41,8 +41,16 @@ jobs:
           docker compose up -d --build
           
           # Wait for healthy
+          MAX_RETRIES=45
+          RETRY=0
           until curl -s -f http://localhost:8080/actuator/health | grep -q "UP"; do
-            echo "Waiting for app to start..."
+            RETRY=$((RETRY + 1))
+            if [ $RETRY -ge $MAX_RETRIES ]; then
+              echo "[ERROR] Timed out waiting for app to start!"
+              docker compose logs
+              exit 1
+            fi
+            echo "Waiting for app to start ($RETRY/$MAX_RETRIES)..."
             sleep 2
           done
 
@@ -72,6 +80,10 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           curl -s http://localhost:8080/actuator/prometheus | grep -E "(authz_|http_server_requests)" | head -n 30 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Dump Docker Logs on Failure
+        if: failure()
+        run: docker compose logs
 
       - name: Teardown Docker
         if: always()

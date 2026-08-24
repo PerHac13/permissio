@@ -37,6 +37,16 @@ docker compose down -v 2>/dev/null || true
 docker compose up -d --build
 
 cleanup() {
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo ""
+        echo "================================================================="
+        echo "[DEBUG] ACCEPTANCE TEST FAILED (Exit Code: $EXIT_CODE)"
+        echo "================================================================="
+        echo "Dumping Docker Compose Container Logs:"
+        docker compose logs --tail=150
+        echo "================================================================="
+    fi
     echo ""
     echo "Tearing down Docker Compose environment..."
     docker compose down -v
@@ -44,13 +54,12 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Waiting for Permissio healthcheck (http://localhost:8080/actuator/health)..."
-MAX_ATTEMPTS=30
+MAX_ATTEMPTS=45
 ATTEMPT=0
 until curl -s -f http://localhost:8080/actuator/health | grep -q "UP"; do
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
         echo "[ERROR] Timed out waiting for Permissio to start!"
-        docker compose logs permissio
         exit 1
     fi
     sleep 2

@@ -15,11 +15,12 @@ services:
         condition: service_started
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-permissio}
-      - POSTGRES_PORT=5432
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/permissio?schema=public
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-permissio}
       - PERMISSIO_JWT_PRIVATE_KEY=${PERMISSIO_JWT_PRIVATE_KEY:-}
       - PERMISSIO_JWT_PUBLIC_KEY=${PERMISSIO_JWT_PUBLIC_KEY:-}
       - PERMISSIO_API_KEY_SALT=${PERMISSIO_API_KEY_SALT:-permissio-docker-salt-for-dev-only}
