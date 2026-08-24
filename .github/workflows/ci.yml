@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Unit & Integration Tests (H2)
     runs-on: ubuntu-latest
 
     steps:
@@ -22,13 +22,12 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Make Maven wrapper executable
-        run: chmod +x ./mvnw
+      - name: Make scripts executable
+        run: chmod +x ./mvnw scripts/*.sh 2>/dev/null || true
 
-      - name: Build and run tests with coverage
-        run: ./mvnw verify -Dspring.profiles.active=test --batch-mode --no-transfer-progress
+      - name: Build and run tests with JaCoCo coverage gate (>= 80%)
+        run: ./mvnw clean verify -Dspring.profiles.active=test --batch-mode --no-transfer-progress
         env:
-          PERMISSIO_JWT_SECRET: ${{ secrets.PERMISSIO_JWT_SECRET || 'ci-jwt-secret-key-fallback-32-chars-xyz987-PerHac13' }}
           PERMISSIO_API_KEY_SALT: ${{ secrets.PERMISSIO_API_KEY_SALT || 'ci-api-key-salt-fallback-abc123-PerHac13' }}
 
       - name: Upload JaCoCo coverage report
@@ -46,3 +45,25 @@ jobs:
           name: test-results
           path: target/surefire-reports/
           retention-days: 14
+
+  docker-independence-acceptance:
+    name: Independence Acceptance Test (Docker Compose)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Run Independence Acceptance Test
+        run: ./scripts/independence-acceptance.sh
+
+      - name: Inspect Docker logs on failure
+        if: failure()
+        run: docker compose logs
