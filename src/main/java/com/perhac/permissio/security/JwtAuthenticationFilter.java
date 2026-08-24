@@ -75,7 +75,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Auth endpoints (register/login) don't require a JWT
         return path.startsWith("/api/v1/auth/")
                 || path.startsWith("/actuator/")
-                || path.startsWith("/h2-console");
+                || path.startsWith("/h2-console")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs");
     }
 
     private String extractToken(HttpServletRequest request) {
