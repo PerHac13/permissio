@@ -1,8 +1,9 @@
 -- Permissio V5: Policies table (tenant-scoped ABAC and Business Rule policy expressions)
 -- Compatible with both H2 (MODE=PostgreSQL) and PostgreSQL
+-- UUID generation handled by JPA @GeneratedValue(strategy = GenerationType.UUID)
 
 CREATE TABLE IF NOT EXISTS policies (
-    id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+    id UUID PRIMARY KEY,
     client_id UUID NOT NULL REFERENCES clients(id),
     resource_type VARCHAR(100) NOT NULL,
     action VARCHAR(50) NOT NULL,

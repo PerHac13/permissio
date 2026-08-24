@@ -1,8 +1,9 @@
 -- Permissio V4: Relationships table (tenant-scoped ReBAC tuples)
 -- Compatible with both H2 (MODE=PostgreSQL) and PostgreSQL
+-- UUID generation handled by JPA @GeneratedValue(strategy = GenerationType.UUID)
 
 CREATE TABLE IF NOT EXISTS relationships (
-    id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+    id UUID PRIMARY KEY,
     client_id UUID NOT NULL REFERENCES clients(id),
     subject_id UUID NOT NULL REFERENCES subjects(id),
     resource_id UUID NOT NULL REFERENCES resources(id),

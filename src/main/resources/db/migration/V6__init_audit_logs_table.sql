@@ -1,8 +1,9 @@
 -- Permissio V6: Audit Logs table (durable, tenant-scoped authorization decision logs)
 -- Compatible with both H2 (MODE=PostgreSQL) and PostgreSQL
+-- UUID generation handled by JPA @GeneratedValue(strategy = GenerationType.UUID)
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+    id UUID PRIMARY KEY,
     client_id UUID NOT NULL REFERENCES clients(id),
     subject_id UUID,
     resource_id UUID,

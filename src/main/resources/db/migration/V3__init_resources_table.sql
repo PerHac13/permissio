@@ -1,8 +1,9 @@
 -- Permissio V3: Resources table (tenant-scoped generic resource registry)
 -- Compatible with both H2 (MODE=PostgreSQL) and PostgreSQL
+-- UUID generation handled by JPA @GeneratedValue(strategy = GenerationType.UUID)
 
 CREATE TABLE IF NOT EXISTS resources (
-    id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+    id UUID PRIMARY KEY,
     client_id UUID NOT NULL REFERENCES clients(id),
     resource_type VARCHAR(100) NOT NULL,
     external_id VARCHAR(255) NOT NULL,

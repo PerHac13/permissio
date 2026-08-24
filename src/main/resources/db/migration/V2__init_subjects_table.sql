@@ -1,8 +1,9 @@
 -- Permissio V2: Subjects table (user/actor registry within tenants)
 -- Compatible with both H2 (MODE=PostgreSQL) and PostgreSQL
+-- UUID generation handled by JPA @GeneratedValue(strategy = GenerationType.UUID)
 
 CREATE TABLE IF NOT EXISTS subjects (
-    id UUID DEFAULT RANDOM_UUID() PRIMARY KEY,
+    id UUID PRIMARY KEY,
     client_id UUID NOT NULL REFERENCES clients(id),
     external_id VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
