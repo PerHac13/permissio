@@ -86,7 +86,31 @@ erDiagram
 Sequence of request interception, MDC correlation, tenant context resolution, and RS256 JWT validation.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e', 'actorTextColor': '#1e1e1e', 'signalTextColor': '#1e1e1e', 'actorBkg': '#93c5fd', 'actorBorder': '#1e40af', 'activationBkgColor': '#dbeafe', 'activationBorderColor': '#3b82f6', 'sequenceNumberColor': '#ffffff', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#1e1e1e'}}}%%
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1e293b',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#38bdf8',
+    'lineColor': '#38bdf8',
+    'textColor': '#ffffff',
+    'actorTextColor': '#ffffff',
+    'actorBkg': '#1e293b',
+    'actorBorder': '#38bdf8',
+    'signalColor': '#38bdf8',
+    'signalTextColor': '#ffffff',
+    'activationBkgColor': '#334155',
+    'activationBorderColor': '#38bdf8',
+    'sequenceNumberColor': '#ffffff',
+    'noteBkgColor': '#1e293b',
+    'noteTextColor': '#ffffff',
+    'noteBorderColor': '#38bdf8',
+    'labelBoxBkgColor': '#1e293b',
+    'labelBoxBorderColor': '#38bdf8',
+    'labelTextColor': '#ffffff',
+    'loopTextColor': '#ffffff'
+  }
+}}%%
 sequenceDiagram
     autonumber
     actor Client as Consuming Client Service
@@ -333,16 +357,16 @@ How Permissio isolates policy evaluation to prevent Remote Code Execution (RCE).
 %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#93c5fd', 'primaryTextColor': '#1e1e1e', 'lineColor': '#6b7280', 'textColor': '#1e1e1e'}}}%%
 flowchart TD
     subgraph Sandboxed Context
-        Context[SimpleEvaluationContext<br/>forReadOnlyDataBinding]
-        MapSub[#subject: Map of attributes]
-        MapRes[#resource: Map of attributes]
-        MapAct[#action: String]
-        MapEnv[#environment: Map of time, ip, env]
+        Context["SimpleEvaluationContext<br/>forReadOnlyDataBinding"]
+        MapSub["#subject: Map of attributes"]
+        MapRes["#resource: Map of attributes"]
+        MapAct["#action: String"]
+        MapEnv["#environment: Map of time, ip, env"]
     end
 
-    Policy[Stored Policy String:<br/>#subject.attributes['department'] == #resource.attributes['ownerTeam']] --> Parser[SpEL ExpressionParser]
+    Policy["Stored Policy String:<br/>#subject.attributes['department'] == #resource.attributes['ownerTeam']"] --> Parser["SpEL ExpressionParser"]
     
-    Parser --> EvalEngine[PolicyEvaluationEngine]
+    Parser --> EvalEngine["PolicyEvaluationEngine"]
     Context --> EvalEngine
     MapSub --> Context
     MapRes --> Context
@@ -350,16 +374,16 @@ flowchart TD
     MapEnv --> Context
 
     EvalEngine --> Exec{Evaluate}
-    Exec -->|Safe Property Access| Result[Boolean: true / false]
+    Exec -->|Safe Property Access| Result["Boolean: true / false"]
     
     subgraph Blocked Malicious Invocations
-        Att1[T java.lang.Runtime] -.->|BLOCKED| Error[EvaluationException]
-        Att2[new java.io.File...] -.->|BLOCKED| Error
-        Att3[System.exit] -.->|BLOCKED| Error
+        Att1["T(java.lang.Runtime)"] -.->|BLOCKED| Error["EvaluationException"]
+        Att2["new java.io.File(...)"] -.->|BLOCKED| Error
+        Att3["System.exit(...)"] -.->|BLOCKED| Error
     end
 
-    classDef safe fill:#67e8f9,stroke:#0891b2,stroke-width:1px,color:#1e1e1e;
-    classDef block fill:#fca5a5,stroke:#991b1b,stroke-width:1px,color:#1e1e1e;
+    classDef safe fill:#0284c7,stroke:#0369a1,stroke-width:2px,color:#ffffff;
+    classDef block fill:#dc2626,stroke:#991b1b,stroke-width:2px,color:#ffffff;
     class Context,MapSub,MapRes,MapAct,MapEnv,Result safe;
     class Att1,Att2,Att3,Error block;
 ```
