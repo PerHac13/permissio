@@ -4,7 +4,10 @@
 
 [![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![CI Pipeline](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![Docker Registry](https://img.shields.io/badge/GHCR-ghcr.io%2Fperhac13%2Fpermissio-blue.svg)](https://github.com/PerHac13/permissio/pkgs/container/permissio)
 [![Coverage](https://img.shields.io/badge/JaCoCo-≥80%25-blue.svg)](target/site/jacoco/index.html)
+[![Benchmark SLA](https://img.shields.io/badge/SLA-p95%20%3C%20150ms-success.svg)](.github/workflows/performance.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
@@ -165,6 +168,42 @@ cd permissio
   - [x] `/authorize` request/response JSON contract locking test (`AuthorizeContractTest`)
   - [x] Complete Developer API Reference & Technical Specification (`docs/API_REFERENCE.md`)
   - [x] High-Level Design (HLD) & Low-Level Design (LLD) specifications (`docs/HLD_DESIGN.md`, `docs/UML_LLD_DESIGN.md`)
+
+---
+
+## Performance Benchmarking & Large-Scale Mock Data
+
+Permissio includes an enterprise benchmarking suite and synthetic data seeder:
+
+### 1. Seed Enterprise Multi-Tenant Dataset
+```bash
+# Seed 5 enterprise tenants with realistic subjects, resources, and ReBAC hierarchies:
+./scripts/seed-large-dataset.sh --file=perf/large-mock-dataset.sql
+
+# Or dynamically generate 1,000+ synthetic entities:
+./scripts/seed-large-dataset.sh --count=1000
+```
+
+### 2. Run Multi-Tier Latency Benchmarks (100 -> 10,000 requests)
+```bash
+# Run sequential multi-tier matrix (100, 500, 1k, 2k, 5k, 10k requests)
+./scripts/run-perf-test.sh --all-tiers
+
+# Or benchmark a specific tier
+./scripts/run-perf-test.sh --requests=1000
+```
+
+### 3. Run Concurrent k6 Load Tests
+```bash
+# Baseline smoke test
+k6 run perf/load-test.js
+
+# Sustained load test (50 Virtual Users)
+k6 run perf/load-test.js --env SCENARIO=load
+
+# Spike stress test (250 Virtual Users)
+k6 run perf/load-test.js --env SCENARIO=spike
+```
 
 ---
 

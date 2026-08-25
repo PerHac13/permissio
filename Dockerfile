@@ -1,16 +1,17 @@
 # Multi-stage build for Permissio
-# Stage 1: Build JAR using Maven and Java 21
+# Stage 1: Build JAR using Maven and Java 21 with BuildKit cache
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /workspace
 
-# Cache dependencies
+# Cache dependencies with BuildKit cache mount
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
-RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -B
+RUN chmod +x ./mvnw
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -B
 
-# Copy source code and package application
+# Copy source code and package application with BuildKit cache
 COPY src src
-RUN ./mvnw clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 ./mvnw clean package -DskipTests -B
 
 # Stage 2: Minimal runtime image
 FROM eclipse-temurin:21-jre-alpine AS runner
