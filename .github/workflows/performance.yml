@@ -68,6 +68,30 @@ jobs:
             sleep 2
           done
 
+      - name: Recompute API Key Hashes for CI Salt
+        run: |
+          SALT="acceptance-test-salt-12345"
+          SQL_FILE="perf/large-mock-dataset.sql"
+
+          # Map: raw API key -> placeholder hash currently in the SQL file
+          declare -A KEYS
+          KEYS["acme-perf-api-key-111"]="73574c83fb0895318cf1bcf55bcfbf5f939e6a0d6f466c1b3f9dcda3e0c03478"
+          KEYS["medihealth-perf-api-key-222"]="84685d94ac1906429df2cdf66cd0cf60a40f7b1e70577d2c400edeb4f1d14589"
+          KEYS["stark-defense-perf-api-key-333"]="95796ea5bd2017530ef3dee77de1df71b5108c2f81688e3d511feec502e25690"
+          KEYS["global-retail-perf-api-key-444"]="a68a7fb6ce3128641fa4eff88ef2ef82c6219d3f92799f4e6220ff0613f36701"
+          KEYS["cloudsaas-perf-api-key-555"]="b79b80c7df42397520b5f0099f03f093d732ae40a38aa05f7331001724047812"
+
+          for KEY in "${!KEYS[@]}"; do
+            OLD_HASH="${KEYS[$KEY]}"
+            NEW_HASH=$(echo -n "${KEY}${SALT}" | sha256sum | awk '{print $1}')
+            if [ "$OLD_HASH" != "$NEW_HASH" ]; then
+              echo "Rewriting hash for $KEY: ${OLD_HASH:0:12}... -> ${NEW_HASH:0:12}..."
+              sed -i "s/$OLD_HASH/$NEW_HASH/g" "$SQL_FILE"
+            else
+              echo "Hash for $KEY already correct"
+            fi
+          done
+
       - name: Seed Multi-Domain Large Mock Dataset
         run: ./scripts/seed-large-dataset.sh --file=perf/large-mock-dataset.sql
 
