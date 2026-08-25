@@ -59,7 +59,7 @@ if [ -z "$JWT_TOKEN" ]; then
     LOGIN_RESP=$(curl -s -X POST "$BASE_URL/api/v1/auth/login" \
         -H "Content-Type: application/json" \
         -H "X-API-Key: $API_KEY" \
-        -d '{"externalId":"alice@acme.com","password":"password123"}')
+        -d '{"externalId":"alice.vp@acme.com","password":"Password123!"}')
     JWT_TOKEN=$(echo "$LOGIN_RESP" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
     SUBJECT_ID=$(echo "$LOGIN_RESP" | grep -o '"subjectId":"[^"]*' | cut -d'"' -f4)
 fi

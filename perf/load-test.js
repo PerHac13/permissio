@@ -90,8 +90,8 @@ export function setup() {
   } else {
     // Fallback: login if already registered
     const loginRes = http.post(`${BASE_URL}/api/v1/auth/login`, JSON.stringify({
-      externalId: 'alice@acme.com',
-      password: 'password123',
+      externalId: 'alice.vp@acme.com',
+      password: 'Password123!',
     }), {
       headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
     });
