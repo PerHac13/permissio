@@ -1,10 +1,10 @@
-# 🏗 Permissio — Architecture & Concepts
+# Permissio — Architecture & Concepts
 
 > A deep dive into Permissio's core primitives, permission hierarchy, and 4-stage authorization evaluation pipeline.
 
 ---
 
-## 🎯 The Core Philosophy: Domain Agnosticism
+## The Core Philosophy: Domain Agnosticism
 
 In traditional applications, authorization is coupled to business domains (e.g. `isTeacher()`, `canApproveExpense()`, `isDocumentOwner()`). As systems grow, this logic fragments across multiple microservices and database queries.
 
@@ -20,19 +20,19 @@ In traditional applications, authorization is coupled to business domains (e.g. 
 
 ---
 
-## 👑 ReBAC Permission Hierarchy
+## ReBAC Permission Hierarchy
 
 Permissio implements a strict rank-ordered relationship hierarchy:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ OWNER   (Rank 4)  ➔  CREATE, READ, UPDATE, DELETE, APPROVE, REJECT     │
+│ OWNER   (Rank 4)  ->  CREATE, READ, UPDATE, DELETE, APPROVE, REJECT     │
 ├────────────────────────────────────────────────────────────────────────┤
-│ MANAGER (Rank 3)  ➔  CREATE, READ, UPDATE                              │
+│ MANAGER (Rank 3)  ->  CREATE, READ, UPDATE                              │
 ├────────────────────────────────────────────────────────────────────────┤
-│ LEAD    (Rank 2)  ➔  CREATE, READ                                      │
+│ LEAD    (Rank 2)  ->  CREATE, READ                                      │
 ├────────────────────────────────────────────────────────────────────────┤
-│ MEMBER  (Rank 1)  ➔  READ                                              │
+│ MEMBER  (Rank 1)  ->  READ                                              │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -41,7 +41,7 @@ Permissio implements a strict rank-ordered relationship hierarchy:
 
 ---
 
-## ⚡ The 4-Stage Authorization Pipeline
+## The 4-Stage Authorization Pipeline
 
 Every authorization check sent to `POST /api/v1/authorize` passes through a deterministic, fast short-circuiting pipeline:
 
@@ -101,7 +101,7 @@ Every authorization check sent to `POST /api/v1/authorize` passes through a dete
 
 ---
 
-## 🔒 Multi-Tenant Isolation by Design
+## Multi-Tenant Isolation by Design
 
 Multi-tenancy in Permissio is **hard-isolated**:
 1. **Root Tenant Anchor:** Every data table (`subjects`, `resources`, `relationships`, `policies`, `audit_logs`) includes a `client_id` foreign key.
