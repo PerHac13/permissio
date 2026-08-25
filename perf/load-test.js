@@ -178,3 +178,9 @@ export default function (data) {
 
   sleep(0.02); // 20ms pacing
 }
+
+export function handleSummary(data) {
+  return {
+    'k6-summary.json': JSON.stringify(data, null, 2),
+  };
+}
