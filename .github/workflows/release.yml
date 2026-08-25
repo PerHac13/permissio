@@ -48,6 +48,7 @@ jobs:
 
       - name: Build Standalone Production JAR
         run: |
+          chmod +x ./mvnw
           ./mvnw clean package -DskipTests --batch-mode --no-transfer-progress
           cp target/permissio-*.jar target/permissio-release.jar
           sha256sum target/permissio-release.jar > target/permissio-release.jar.sha256

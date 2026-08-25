@@ -37,7 +37,9 @@ jobs:
           cache: maven
 
       - name: Build Java Application
-        run: ./mvnw clean compile -DskipTests --batch-mode --no-transfer-progress
+        run: |
+          chmod +x ./mvnw
+          ./mvnw clean compile -DskipTests --batch-mode --no-transfer-progress
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
